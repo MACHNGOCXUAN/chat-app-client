@@ -10,6 +10,7 @@ import {
   Image,
 } from "react-native";
 import { FontAwesome6, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import avatar from '../../assets/images/react-logo.png'; 
 
 const Friend = () => {
   const features = [
@@ -19,15 +20,15 @@ const Friend = () => {
   ];
 
   const [friends, setFriends] = useState([
-    { id: "101", name: "Nguyễn Văn A", avatar: "user" },
-    { id: "102", name: "Trần Thị B", avatar: "user" },
-    { id: "103", name: "Lê Minh C", avatar: "user" },
-    { id: "104", name: "Phạm Hữu D", avatar: "user" },
-    { id: "105", name: "Đặng Văn E", avatar: "user" },
-    { id: "106", name: "Đặng Văn E", avatar: "user" },
-    { id: "107", name: "Đặng Văn E", avatar: "user" },
-    { id: "108", name: "Đặng Văn E", avatar: "user" },
-    { id: "109", name: "Đặng Văn E", avatar: "user" },
+    { id: "101", name: "Nguyễn Văn A", avatar: avatar },
+    { id: "102", name: "Trần Thị B", avatar: avatar },
+    { id: "103", name: "Lê Minh C", avatar: avatar },
+    { id: "104", name: "Phạm Hữu D", avatar: avatar },
+    { id: "105", name: "Đặng Văn E", avatar: avatar },
+    { id: "106", name: "Đặng Văn E", avatar: avatar },
+    { id: "107", name: "Đặng Văn E", avatar: avatar },
+    { id: "108", name: "Đặng Văn E", avatar: avatar },
+    { id: "109", name: "Đặng Văn E", avatar: avatar },
   ]);
 
   const [active, setActive] = useState(0)
@@ -55,14 +56,7 @@ const Friend = () => {
     <View style={{ flexDirection: "row", alignItems: 'center', padding: 15, justifyContent: 'space-between' }}>
       <View style={styles.friendItem}>
         <View style={styles.avatar}>
-          {item.avatar ? (
-            <Image
-              source={{uri: "https://yt3.ggpht.com/yti/ANjgQV_-ulcm3ayQp1BHT4huv8WIf5VP_FqS1s7z6xjyD1C6aQ=s88-c-k-c0x00ffffff-no-rj"}}
-              style={styles.avatarImage}
-            />
-          ) : (
-            <FontAwesome6 name="user" size={20} color="#fff" />
-          )}
+          <Image source={item.avatar} style={styles.avatar} />
         </View>
         <Text style={styles.friendName}>{item.name}</Text>
       </View>
@@ -176,12 +170,11 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 100,
-    backgroundColor: "#297EFF",
     justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
+    alignItems: "center"
   },
   friendName: {
+    marginLeft: 10,
     fontSize: 18,
   },
 });

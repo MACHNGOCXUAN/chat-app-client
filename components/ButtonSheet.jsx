@@ -4,12 +4,12 @@ import { Modal, View, Text, StyleSheet, Pressable } from 'react-native';
 const ButtonSheet = ({ visible, onClose, onSelect }) => {
   return (
     <Modal
-      animationType="slide"
+      animationType="fade"
       transparent={true}
       visible={visible}
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
+      <View style={styles.overlay} onStartShouldSetResponder={() => true} onResponderRelease={onClose}>
         <View style={styles.sheet}>
           <Text style={[styles.textHeader, { color: 'gray' }]}>Sắp xếp theo</Text>
           <Pressable style={styles.textView} onPress={() => onSelect('Hoạt động cuối')}>
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
   sheet: {
     width: '95%',
