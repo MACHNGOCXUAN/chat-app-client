@@ -15,7 +15,7 @@ const Contacts = () => {
       <Tab.Navigator 
         screenOptions={{
           tabBarLabelStyle: { fontSize: 16 },
-          tabBarIndicatorStyle: { backgroundColor: "#007AFF", height: 2 }
+          tabBarIndicatorStyle: { backgroundColor: "#007AFF", height: 2, borderRadius: 1 }
         }}
       >
         <Tab.Screen name="Bạn bè" component={Friend}/>
