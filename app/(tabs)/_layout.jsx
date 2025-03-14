@@ -1,6 +1,8 @@
 import React from "react";
 import { Tabs } from "expo-router";
 import { Ionicons, FontAwesome } from "@expo/vector-icons";
+import Header from "../../components/Header";
+import { Text, View } from "react-native";
 
 export default function Layout() {
   return (
