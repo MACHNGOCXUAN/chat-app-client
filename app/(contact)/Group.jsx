@@ -2,7 +2,7 @@ import { FlatList, Pressable, ScrollView, StyleSheet, Text, View, Image } from '
 import React, { useState } from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
 import ButtonSheet from '../../components/ButtonSheet';
-import avatar from '../../assets/images/react-logo.png'; 
+import avatar from '../../assets/images/avatar.png'; 
 import { router, useNavigation } from 'expo-router';
 
 const Group = () => {
