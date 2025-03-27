@@ -3,7 +3,6 @@ import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
 import "react-native-reanimated";
 import "./global.css";
-import CreateGroup from "./(contact)/CreateGroup";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Text, View } from "react-native";
 
@@ -44,11 +43,13 @@ export default function RootLayout() {
         })}
         initialParams={{setMemberCount}}
       />
-      {/* <Stack.Screen name="login" options={{ presentation: "modal" }} />
+
+      <Stack.Screen name="/(contact)/QRScanner"/>
+      <Stack.Screen name="/(screens)/Login" options={{ presentation: "modal" }} /> 
       <Stack.Screen
-        name="(screens)/register"
+        name="(screens)/Register"
         options={{ presentation: "modal" }}
-      /> */}
+      />
     </Stack>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TextInput, FlatList, Pressable, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -22,6 +22,12 @@ const CreateGroup = ({ navigation }) => {
     { id: '4', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
     { id: '5', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
     { id: '6', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
+    { id: '7', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
+    { id: '8', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
+    { id: '9', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
+    { id: '10', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
+    { id: '11', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
+
   ];
 
   const toggleSelect = (contact) => {
@@ -65,6 +71,9 @@ const CreateGroup = ({ navigation }) => {
     }
   }, [selectedContacts]);
 
+  const inputRef = useRef(null);
+
+
   return (
     <View className='flex-1 relative'>
       <View className='p-5 flex-col gap-5'>
@@ -84,6 +93,7 @@ const CreateGroup = ({ navigation }) => {
             <TextInput
               className={`text-[20px] ml-4 leading-none py-2 pr-12 border-b-[1px] ${isFocused ? "border-[#0045AD]": "border-transparent"}`}
               placeholder="Đặt tên nhóm"
+              placeholderTextColor="#888"
               value={groupName}
               onChangeText={setGroupName}
               onFocus={() => setIsFocused(true)}
@@ -95,26 +105,32 @@ const CreateGroup = ({ navigation }) => {
             
           </View>
           {
-            isFocused && <Ionicons name='checkmark-outline' size={35} className='font-bold' color="#0045AD"/>
+            isFocused && 
+            <Pressable  onPress={() => inputRef.current?.focus()}>
+              <Ionicons name='checkmark-outline' size={35} className='font-bold' color="#0045AD"/>
+            </Pressable>
           }
         </View>
 
         <View className='relative'>
           <TextInput
-            className='bg-[#ECF9F0] text-[18px] py-3 rounded-[10px] pl-12'
+            ref={inputRef}
+            className='bg-[#ECF9F0] text-[18px] border-[1px] border-[#888] py-3 rounded-[10px] pl-12'
             placeholder="Tìm tên hoặc số điện thoại"
+            placeholderTextColor="#888"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
 
-          <Ionicons name='search-outline' size={25} className='absolute top-1/2 -translate-y-1/2 left-2'/>
+          <Ionicons color='#888' name='search-outline' size={25} className='absolute top-1/2 -translate-y-1/2 left-2'/>
         </View>
-
         <FlatList
           data={allMembers.filter(member =>
             member.name.toLowerCase().includes(searchQuery.toLowerCase())
           )}
+          showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.id}
+          contentContainerStyle = {{ paddingBottom: 200 }}
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => toggleSelect(item)}

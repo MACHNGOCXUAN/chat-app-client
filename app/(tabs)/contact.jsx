@@ -13,6 +13,8 @@ const Contacts = () => {
     <>
       <Header/>
       <Tab.Navigator 
+        lazy={true} // Chỉ tải tab khi người dùng nhấn vào
+        removeClippedSubviews={true} // Giúp tiết kiệm bộ nhớ
         screenOptions={{
           tabBarLabelStyle: { fontSize: 16 },
           tabBarIndicatorStyle: { backgroundColor: "#007AFF", height: 2, borderRadius: 1 }
