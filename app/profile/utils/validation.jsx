@@ -1,4 +1,10 @@
 import * as Yup from 'yup';
+import {
+  AlertIOS,
+  PermissionsAndroid,
+  Platform,
+  ToastAndroid,
+} from 'react-native';
 export const changePasswordValid = {
     initial: {
       oldPassword: '',
@@ -39,5 +45,5 @@ export const changePasswordValid = {
         .max(30, 'Tối đa 30 kí tự'),
     }),
   };
-  export const showImagePicker = async (uploadFile, isCoverImage) => {}
-  export const openCamera = async (uploadFile, isCoverImage) => {}
+
+  
