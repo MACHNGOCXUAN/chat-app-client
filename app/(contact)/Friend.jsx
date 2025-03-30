@@ -7,10 +7,11 @@ import {
   Pressable,
   ScrollView,
   TouchableOpacity,
+  TouchableHighlight,
   Image,
 } from "react-native";
 import { FontAwesome6, Ionicons, MaterialIcons } from "@expo/vector-icons";
-import avatar from '../../assets/images/react-logo.png'; 
+import avatar from '../../assets/images/avatar.png';
 
 const Friend = () => {
   const features = [
@@ -53,7 +54,7 @@ const Friend = () => {
   );
 
   const renderFriend = ({ item }) => (
-    <View style={{ flexDirection: "row", alignItems: 'center', padding: 15, justifyContent: 'space-between' }}>
+    <TouchableOpacity style={{ flexDirection: "row", alignItems: 'center', padding: 15, justifyContent: 'space-between' }}>
       <View style={styles.friendItem}>
         <View style={styles.avatar}>
           <Image source={item.avatar} style={styles.avatar} />
@@ -62,13 +63,13 @@ const Friend = () => {
       </View>
       <View style={{ flexDirection: "row", gap: 20 }}>
         <TouchableOpacity>
-          <MaterialIcons name="call" size={25}/>
+          <Ionicons name="call-outline" size={25}/>
         </TouchableOpacity>
         <TouchableOpacity>
-          <MaterialIcons name="videocam" size={28}/>
+          <Ionicons name="videocam-outline" size={28}/>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

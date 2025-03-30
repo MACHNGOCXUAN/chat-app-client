@@ -1,13 +1,13 @@
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "react-native-reanimated";
 import "./global.css";
-import CreateGroup from "./(contact)/CreateGroup";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Text, View } from "react-native";
 
 export default function RootLayout() {
+  const [memberCount, setMemberCount] = useState(0);
   return (
     <Stack screenOptions={{
       headerShown: false
@@ -22,17 +22,34 @@ export default function RootLayout() {
               <MaterialIcons onPress={() => navigation.goBack()} name="west" size={25}/>
               <View>
                 <Text style={{ fontWeight: '600', fontSize: 18 }}>Tạo nhóm</Text>
-                <Text>Đã chọn: 0</Text>
+                <Text>Đã chọn: {memberCount}</Text>
               </View>
             </View>
           )
         })}
+        initialParams={{setMemberCount}}
       />
-      {/* <Stack.Screen name="login" options={{ presentation: "modal" }} />
+
+      <Stack.Screen name="(contact)/AddFriend" 
+        options={({navigation}) => ({
+          title: "",
+          headerShown: true,
+          headerLeft: ()=>(
+            <View style={{ flexDirection: 'row', gap: 20, alignItems: 'center' }}>
+              <MaterialIcons onPress={() => navigation.goBack()} name="west" size={25}/>
+              <Text style={{ fontWeight: '600', fontSize: 18 }}>Thêm bạn</Text>
+            </View>
+          )
+        })}
+        initialParams={{setMemberCount}}
+      />
+
+      <Stack.Screen name="/(contact)/QRScanner"/>
+      <Stack.Screen name="/(screens)/Login" options={{ presentation: "modal" }} /> 
       <Stack.Screen
-        name="(screens)/register"
+        name="(screens)/Register"
         options={{ presentation: "modal" }}
-      /> */}
+      />
     </Stack>
   );
 }
