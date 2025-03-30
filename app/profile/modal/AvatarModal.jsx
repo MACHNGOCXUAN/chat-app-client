@@ -3,7 +3,7 @@ import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import CustomModal from './CustomModal';
-import { openCamera, showImagePicker } from '../utils/validation';
+import commonFuc,{ openCamera, showImagePicker } from '../utils/commonFuc';
 
 const AvatarModal = ({
   modalVisible = false,

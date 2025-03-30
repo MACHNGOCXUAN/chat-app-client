@@ -38,7 +38,10 @@ const UpdateUserProfileModal = ({ modalVisible = false, setModalVisible = null, 
     const date = dateOfBirth.getDate();
     const month = dateOfBirth.getMonth() + 1;
     const year = dateOfBirth.getFullYear();
-    return `${('0' + date).slice(-2)}/${('0' + month).slice(-2)}/${year}`;
+
+    return (
+      ('00' + date).slice(-2) + '/' + ('00' + month).slice(-2) + '/' + year
+    );
   };
 
   const handleUpdateUserProfile = async profile => {
@@ -68,7 +71,9 @@ const UpdateUserProfileModal = ({ modalVisible = false, setModalVisible = null, 
   };
 
   const handleOpenDatePicker = () => {
-    console.log("Opening date picker...");
+    const date = userProfile?.dateOfBirth;
+    const dob = new Date(date?.year, date?.month - 1, date?.day);console.log("Opening date picker...");
+    setDateOfBirth(dob);
     setShow(true);
   };
 
@@ -137,8 +142,8 @@ const UpdateUserProfileModal = ({ modalVisible = false, setModalVisible = null, 
                       type="clear"
                       title={dobTitle}
                       onPress={handleOpenDatePicker}
-                      titleStyle={{ color: '#000' }}
-                      containerStyle={{ marginLeft: 10 }}
+                      titleStyle={{color: '#000'}}
+                      containerStyle={{marginLeft: 10}}
                     />
                   </View>
                 </View>
@@ -160,17 +165,15 @@ const UpdateUserProfileModal = ({ modalVisible = false, setModalVisible = null, 
             );
           }}
         </Formik>
-      </CustomModal>
-
-      {show && (
         <DateTimePickerModal
-          isVisible={show}
-          date={dateOfBirth}
-          mode="date"
-          onConfirm={handleConfirm}
-          onCancel={hideDatePicker}
-        />
-      )}
+  isVisible={show}
+  date={dateOfBirth}
+  mode="date"
+  onConfirm={handleConfirm}
+  onCancel={hideDatePicker}
+/>
+      </CustomModal>
+      
     </>
   );
 };

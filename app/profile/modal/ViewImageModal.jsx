@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Icon } from 'react-native-elements/dist/icons/Icon';
+import { Icon } from 'react-native-elements';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import VideoPlayer from 'react-native-video-player';
 import { Dimensions } from 'react-native';

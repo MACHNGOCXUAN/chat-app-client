@@ -1,55 +1,68 @@
+import { Formik } from 'formik';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Platform, StyleSheet, View, TextInput, Text } from 'react-native';
+import {
+  Modal,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  TextInput, 
+} from 'react-native';
 import { Button, Icon } from 'react-native-elements';
-import { Formik } from 'formik';
-import * as Yup from 'yup'; // Import Yup để xác thực form
+
+import { logoutAllValid } from '../utils/validation';
 import CustomModal from './CustomModal';
 
-// Xác thực form với Yup
-const logoutAllValid = {
-  initial: { password: '' }, // Giá trị khởi tạo
-  validationSchema: Yup.object().shape({
-    password: Yup.string().required('Mật khẩu là bắt buộc'), // Kiểm tra mật khẩu
-  }),
-};
-
-const LogoutAllModal = (props) => {
-  const { modalVisible, setModalVisible } = props;
-
+const LogoutAllModal = ({ modalVisible = false, setModalVisible = null }) => {
   const handleCloseModal = () => {
     setModalVisible(false);
   };
 
-  const handleOnSubmit = async (values) => {
+  const handleOnSubmit = async values => {
     const { password } = values;
-    // Xử lý đăng xuất ở đây (ví dụ: gọi API)
-    console.log('Đăng xuất với mật khẩu:', password);
+
     handleCloseModal();
   };
 
   return (
-    <CustomModal visible={modalVisible} onCloseModal={handleCloseModal} title="Đăng xuất ra khỏi các thiết bị khác">
+    <CustomModal
+      visible={modalVisible}
+      onCloseModal={handleCloseModal}
+      title="Đăng xuất ra khỏi các thiết bị khác"
+    >
       <Formik
         initialValues={logoutAllValid.initial}
         validationSchema={logoutAllValid.validationSchema}
-        onSubmit={(values) => handleOnSubmit(values)} // Gọi hàm khi form được submit
+        onSubmit={values => handleOnSubmit(values)}
       >
-        {(formikProps) => {
+        {formikProps => {
           const { values, errors, handleChange, handleSubmit } = formikProps;
           return (
             <>
               <View style={styles.body}>
-                <TextInput
-                  placeholder="Nhập mật khẩu hiện tại"
-                  autoFocus
-                  secureTextEntry={true}
-                  style={styles.input}
-                  onChangeText={handleChange('password')} // Liên kết với field password
-                  value={values.password} // Giá trị mật khẩu
-                />
-                {errors.password && <Text style={styles.error}>{errors.password}</Text>} {/* Hiển thị lỗi nếu có */}
+                <View style={styles.inputContainer}>
+                  <Icon
+                    name="lock"
+                    type="antdesign"
+                    size={24}
+                    color="black"
+                    style={styles.icon}
+                  />
+                  <TextInput
+                    placeholder="Nhập mật khẩu hiện tại"
+                    autoFocus
+                    onChangeText={handleChange('password')}
+                    secureTextEntry
+                    value={values.password}
+                    style={styles.input}
+                  />
+                </View>
+                {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
               </View>
+
               <View style={styles.footer}>
                 <Button
                   title="Hủy"
@@ -58,11 +71,7 @@ const LogoutAllModal = (props) => {
                   titleStyle={{ color: 'black' }}
                   containerStyle={{ marginRight: 20 }}
                 />
-                <Button
-                  title="Đăng xuất"
-                  onPress={handleSubmit} // Gọi handleSubmit từ Formik
-                  type="clear"
-                />
+                <Button title="Đăng xuất" onPress={handleSubmit} type="clear" />
               </View>
             </>
           );
@@ -75,11 +84,6 @@ const LogoutAllModal = (props) => {
 LogoutAllModal.propTypes = {
   modalVisible: PropTypes.bool,
   setModalVisible: PropTypes.func,
-};
-
-LogoutAllModal.defaultProps = {
-  modalVisible: false,
-  setModalVisible: null,
 };
 
 const BUTTON_RADIUS = 10;
@@ -113,25 +117,35 @@ const styles = StyleSheet.create({
   },
   body: {
     paddingHorizontal: 15,
-    paddingVertical: 10,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    marginVertical: 5,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: BUTTON_RADIUS,
-    paddingHorizontal: 10,
+    flex: 1,
     height: 40,
+    paddingLeft: 10,
+    fontSize: 14,
+  },
+  icon: {
+    marginRight: 5,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginLeft: 10,
   },
   footer: {
     paddingHorizontal: 15,
     paddingBottom: 5,
     flexDirection: 'row',
     justifyContent: 'flex-end',
-  },
-  error: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 5,
   },
 });
 
