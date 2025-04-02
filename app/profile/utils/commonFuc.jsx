@@ -1,42 +1,10 @@
-import {
-  AlertIOS,
-  PermissionsAndroid,
-  Platform,
-  ToastAndroid,
-} from 'react-native';
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-
-// Hàm chuyển ảnh từ URI sang Base64 (chỉ khi cần)
-const getBase64FromUri = async (uri) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const xhr = new XMLHttpRequest();
-      xhr.onload = function () {
-        const reader = new FileReader();
-        reader.onloadend = function () {
-          resolve(reader.result.split(',')[1]); // Chỉ lấy phần base64
-        };
-        reader.readAsDataURL(xhr.response);
-      };
-      xhr.onerror = function () {
-        reject(new Error("Lỗi khi chuyển ảnh từ URI sang Base64"));
-      };
-      xhr.open('GET', uri);
-      xhr.responseType = 'blob';
-      xhr.send();
-    } catch (error) {
-      reject(error);
-    }
-  });
-};
+import * as ImagePicker from 'expo-image-picker';
+import * as MediaLibrary from 'expo-media-library';
+import { Alert, Platform } from 'react-native';
 
 const commonFuc = {
-  notifyMessage: message => {
-    if (Platform.OS === 'android') {
-      ToastAndroid.show(message, ToastAndroid.SHORT);
-    } else {
-      AlertIOS.alert(message);
-    }
+  notifyMessage: (title, message) => {
+    Alert.alert(title || 'Thông báo', message);
   }
 };
 
@@ -47,98 +15,82 @@ const handleSendImage = async (file, uploadFile, isCoverImage) => {
   }
 
   let fileName = file.fileName || `image_${Date.now()}`;
-  let fileExtension = fileName.includes('.') ? fileName.split('.').pop() : 'jpg';
-  fileExtension = `.${fileExtension}`;
+  let fileExtension = fileName.split('.').pop() || 'jpg';
+  fileExtension = fileExtension.toLowerCase();
 
-  let fileBase64 = file.base64;
-  
-  // Nếu không có base64, convert từ URI
-  if (!fileBase64) {
-    try {
-      console.log("Không có base64, đang chuyển đổi từ URI...");
-      fileBase64 = await getBase64FromUri(file.uri);
-    } catch (error) {
-      console.error("Lỗi khi chuyển đổi ảnh sang Base64:", error);
-      return;
-    }
-  }
+  // Expo đã trả về base64 nếu yêu cầu
+  const fileBase64 = file.base64 || '';
 
-  const body = { fileName, fileExtension, fileBase64 };
+  const body = { 
+    fileName, 
+    fileExtension: `.${fileExtension}`, 
+    fileBase64 
+  };
 
   try {
     await uploadFile(body, isCoverImage);
-    console.log("Upload file thành công:", body);
+    commonFuc.notifyMessage('Thành công', 'Upload file thành công');
   } catch (error) {
     console.error("Lỗi khi upload file:", error);
+    commonFuc.notifyMessage('Lỗi', 'Upload file thất bại');
   }
 };
 
 export const showImagePicker = async (uploadFile, isCoverImage) => {
-  const options = {
-    mediaType: 'photo',
-    includeBase64: true,  // Quan trọng: đảm bảo trả về Base64
-  };
-
-  launchImageLibrary(options, async res => {
-    if (res.didCancel) {
-      commonFuc.notifyMessage('Hủy chọn ảnh');
-    } else if (res.errorCode) {
-      console.error("Lỗi chọn ảnh:", res.errorMessage);
-      commonFuc.notifyMessage('Lỗi chọn ảnh');
-    } else {
-      let source = res.assets?.[0];
-      if (source) {
-        await handleSendImage(source, uploadFile, isCoverImage);
-      } else {
-        console.error("Lỗi: Không tìm thấy ảnh trong assets");
-      }
-    }
-  });
-};
-
-export const openCamera = async (uploadFile, isCoverImage) => {
-  try {
-    if (Platform.OS === 'android') {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.CAMERA,
-        {
-          title: 'Quyền truy cập camera',
-          message: 'Ứng dụng cần quyền để chụp ảnh',
-          buttonNeutral: 'Hỏi lại sau',
-          buttonNegative: 'Hủy',
-          buttonPositive: 'Đồng ý',
-        },
-      );
-      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-        commonFuc.notifyMessage('Chưa cấp quyền truy cập máy ảnh');
-        return;
-      }
-    }
-  } catch (err) {
-    console.error("Lỗi khi xin quyền:", err);
+  // Yêu cầu quyền truy cập thư viện ảnh
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  
+  if (status !== 'granted') {
+    commonFuc.notifyMessage('Cần cấp quyền', 'Ứng dụng cần quyền truy cập thư viện ảnh');
     return;
   }
 
-  const options = {
-    mediaType: 'photo',
-    includeBase64: true,  // Quan trọng: đảm bảo có Base64
-  };
+  let result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    aspect: [4, 3],
+    quality: 0.8,
+    base64: true,
+  });
 
-  launchCamera(options, async res => {
-    if (res.didCancel) {
-      commonFuc.notifyMessage('Hủy chụp ảnh');
-    } else if (res.errorCode) {
-      console.error("Lỗi chụp ảnh:", res.errorMessage);
-      commonFuc.notifyMessage('Lỗi chụp ảnh');
-    } else {
-      let source = res.assets?.[0];
-      if (source) {
-        await handleSendImage(source, uploadFile, isCoverImage);
-      } else {
-        console.error("Lỗi: Không tìm thấy ảnh trong assets");
+  if (!result.canceled) {
+    await handleSendImage(result.assets[0], uploadFile, isCoverImage);
+    console.log("Da upload file", result.assets[0]);
+  } else {
+    commonFuc.notifyMessage('Thông báo', 'Bạn đã hủy chọn ảnh');
+  }
+};
+
+export const openCamera = async (uploadFile, isCoverImage) => {
+  // Yêu cầu quyền truy cập camera
+  const { status } = await ImagePicker.requestCameraPermissionsAsync();
+  
+  if (status !== 'granted') {
+    commonFuc.notifyMessage('Cần cấp quyền', 'Ứng dụng cần quyền truy cập camera');
+    return;
+  }
+
+  let result = await ImagePicker.launchCameraAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    aspect: [4, 3],
+    quality: 0.8,
+    base64: true,
+  });
+
+  if (!result.canceled) {
+    // Yêu cầu quyền lưu ảnh vào thư viện (iOS)
+    if (Platform.OS === 'ios') {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status === 'granted') {
+        await MediaLibrary.saveToLibraryAsync(result.assets[0].uri);
       }
     }
-  });
+    
+    await handleSendImage(result.assets[0], uploadFile, isCoverImage);
+  } else {
+    commonFuc.notifyMessage('Thông báo', 'Bạn đã hủy chụp ảnh');
+  }
 };
 
 export default commonFuc;
