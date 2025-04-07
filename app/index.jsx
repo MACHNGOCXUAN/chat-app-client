@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import slider1 from '../assets/images/slider1.png';
 import slider2 from '../assets/images/slider2.png';
 import { router } from 'expo-router';
+import { appColors } from '../constants/appColor';
 
 const WelcomeScreen = () => {
   const screenWidth = Dimensions.get("window").width;
@@ -108,7 +109,7 @@ const WelcomeScreen = () => {
   return (
     <View className="flex-col justify-around" style={{ flex: 1, padding: 5 }}>
       <View style={{ paddingTop: 30, justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ fontSize: 24, color: '#1e3a8a', fontWeight: 'bold' }}>CHAT APP</Text>
+        <Text style={{ fontSize: 24, color: appColors.primary, fontWeight: 'bold' }}>CHAT APP</Text>
       </View>
 
       <View className="flex flex-col gap-4">
@@ -139,13 +140,15 @@ const WelcomeScreen = () => {
       <View className="px-7 flex-col gap-5">
         <TouchableHighlight
           onPress={() => router.push("/(screens)/Login")}
-          className="py-5 bg-blue-600 rounded-lg"
+          className="py-5 rounded-lg"
+          style = {{ backgroundColor: appColors.primary }}
           underlayColor="#1e3a8a"
         >
           <Text className="text-center text-white">Đăng nhập</Text>
         </TouchableHighlight>
 
         <TouchableHighlight
+          onPress={() => router.push("/(screens)/Register")}
           className="py-5 bg-slate-200 rounded-lg"
           underlayColor="#e2e8f0"
         >

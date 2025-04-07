@@ -1,23 +1,66 @@
-import { router } from 'expo-router';
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableHighlight, StyleSheet } from 'react-native';
+import { router } from 'expo-router'
+import React, { useState } from 'react'
+import { View, Text, TextInput, TouchableHighlight, StyleSheet, ActivityIndicator, Keyboard } from 'react-native'
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import axiosInstance from '../../utils/axiosInstance'
+import { useDispatch } from 'react-redux'
+import { addAuth } from '../../stores/reducers/authReducer'
+import { appColors } from '../../constants/appColor'
 
-const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const LoginScreen = () => {
+  const [phone, setPhone] = useState('')
+  const [password, setPassword] = useState('')
+  const [errMessage, setErrMessage] = useState('')
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false)
 
-  const handleLogin = () => {
-    const user = {
-      email: "xuan@gmail.com",
-      password: "123456"
+  const validateInputs = () => {
+    if (!phone.trim()) {
+      setErrMessage('Vui lòng nhập số điện thoại');
+      return false
     }
-
-    if(email === user.email && password === user.password) {
-      router.push('/(tabs)');
-    } else {
-      alert("Tài khoản không tồn tại!");
+    
+    if (!/^\d+$/.test(phone)) {
+      setErrMessage('Số điện thoại chỉ được chứa số');
+      return false
     }
-  };
+    
+    if (!password.trim()) {
+      setErrMessage('Vui lòng nhập mật khẩu');
+      return false
+    }
+    
+    return true
+  }
+
+  const handleLogin = async () => {
+    if (!validateInputs()) return
+    
+    Keyboard.dismiss()
+    setErrMessage("")
+    setLoading(true)
+    
+    try {
+      const res = await axiosInstance.post("/login", {
+        phoneNumber: phone,
+        password
+      })
+
+      dispatch(addAuth(res.data.data));
+      await AsyncStorage.setItem(
+        "auth",
+        JSON.stringify(res.data.data)
+      );
+      router.replace('/(tabs)')
+    } catch (error) {
+      console.log('Login error:', error);
+      setErrMessage(error.response?.data?.message || error.error || 'Đăng nhập thất bại');
+    } finally {
+      setLoading(false);
+    }  
+  }
+
+  const isDisabled = !phone.trim() || !password.trim() || loading;
 
   return (
     <View style={styles.container}>
@@ -25,11 +68,13 @@ const LoginScreen = ({ navigation }) => {
 
       <TextInput
         style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
+        placeholder="Số điện thoại"
+        value={phone}
+        onChangeText={setPhone}
+        keyboardType="phone-pad"
         autoCapitalize="none"
+        autoFocus
+        returnKeyType="next"
       />
 
       <TextInput
@@ -38,38 +83,50 @@ const LoginScreen = ({ navigation }) => {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+        returnKeyType="done"
+        onSubmitEditing={handleLogin}
       />
 
+      {errMessage ? (
+        <Text style={styles.errorText}>{errMessage}</Text>
+      ) : null}
+
       <TouchableHighlight
-        style={styles.loginButton}
-        underlayColor="#1e3a8a"
+        style={[styles.loginButton, isDisabled && styles.disabledButton]}
         onPress={handleLogin}
+        disabled={isDisabled}
+        underlayColor="#1d4ed8"
       >
-        <Text style={styles.loginButtonText}>Đăng nhập</Text>
+        {loading ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.loginButtonText}>Đăng nhập</Text>
+        )}
       </TouchableHighlight>
 
       <TouchableHighlight
         style={styles.registerLink}
         underlayColor="#e2e8f0"
         onPress={() => router.push('/(screens)/Register')}
+        disabled={loading}
       >
         <Text style={styles.registerLinkText}>Tạo tài khoản mới</Text>
       </TouchableHighlight>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     backgroundColor: '#fff',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1e3a8a',
+    color: appColors.primary,
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -77,15 +134,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,
-    padding: 10,
+    padding: 15,
     marginBottom: 15,
     fontSize: 16,
   },
   loginButton: {
-    backgroundColor: '#1e3a8a',
+    backgroundColor: appColors.primary,
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
   loginButtonText: {
     color: '#fff',
@@ -95,11 +155,17 @@ const styles = StyleSheet.create({
   registerLink: {
     marginTop: 15,
     alignItems: 'center',
+    padding: 10,
   },
   registerLinkText: {
     color: '#1e3a8a',
     fontSize: 16,
   },
-});
+  errorText: {
+    color: '#ef4444',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+})
 
-export default LoginScreen;
+export default LoginScreen
