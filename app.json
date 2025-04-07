@@ -1,4 +1,14 @@
 {
+  "ios": {
+  "supportsTablet": true,
+  "infoPlist": {
+    "NSCameraUsageDescription": "Ứng dụng cần truy cập camera để chụp ảnh",
+    "NSPhotoLibraryUsageDescription": "Ứng dụng cần truy cập thư viện ảnh để chọn ảnh",
+    "NSPhotoLibraryAddUsageDescription": "Ứng dụng cần lưu ảnh vào thư viện",
+    "NSMicrophoneUsageDescription": "Ứng dụng cần truy cập microphone khi quay video"
+  }
+}
+  ,
   "expo": {
     "name": "chat-app-client",
     "slug": "chat-app-client",
