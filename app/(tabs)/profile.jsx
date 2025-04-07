@@ -16,6 +16,7 @@ import ChangePasswordModal from '../profile/modal/ChangePasswordModal';
 import LogoutAllModal from '../profile/modal//LogoutAllModal';
 import UpdateUserProfileModal from '../profile/modal/UpdateUserProfileModal';
 import ViewImageModal from '../profile/modal/ViewImageModal';
+import { useSelector } from 'react-redux';
 
 const DEFAULT_IMAGE_MODAL = {
   isVisible: false,
@@ -27,10 +28,15 @@ const DEFAULT_IMAGE_MODAL = {
 const test = 'https://i.ibb.co/1GtXD3pd/favicon1.png';
 
 export default function MeScreen() {
+
+  const { user } = useSelector(state => state.auth)
+  console.log("user: ", user);
+  
+
   const [userProfile, setUserProfile] = useState({
-    avatar: test,
+    avatar: user?.avatarURL,
     coverImage: 'https://i.ibb.co/1GtXD3pd/favicon1.png',
-    name: 'Huynh Cong Vuong',
+    name: user?.username,
     gender: false,
     dateOfBirth: { day: 24, month: 9, year: 2003},
     username: 'vuongcong276@gmail.com',

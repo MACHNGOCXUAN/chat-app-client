@@ -1,4 +1,5 @@
 export const appColors = {
   primary: '#3386ff',
-  white: "#fff"
+  white: "#fff",
+  placeholderTextColor: "#888"
 };

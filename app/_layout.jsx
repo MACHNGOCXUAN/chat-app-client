@@ -50,7 +50,7 @@ export default function RootLayout() {
 
         <Stack.Screen name="/(contact)/QRScanner"/>
         <Stack.Screen 
-          name="(screens)/Login" 
+          name="(screens)/login" 
           options={({ navigation }) => ({
             title: "",
             headerShown: true,
@@ -64,7 +64,7 @@ export default function RootLayout() {
           })}
         /> 
         <Stack.Screen
-          name="(screens)/Register"
+          name="(screens)/register"
           options={({ navigation }) => ({
             title: "",
             headerShown: true,

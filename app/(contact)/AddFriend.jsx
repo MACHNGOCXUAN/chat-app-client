@@ -3,6 +3,7 @@ import React, { Component, useState } from 'react'
 import { MaterialIcons } from '@expo/vector-icons'
 import QRCode from 'react-native-qrcode-svg'
 import { router } from 'expo-router';
+import { appColors } from '../../constants/appColor';
 
 
 const AddFriend = () =>  {
@@ -29,7 +30,7 @@ const AddFriend = () =>  {
         <View className='px-5 flex-row items-center gap-5 py-5'>
           <TextInput 
             placeholder='Nhập số điện thoại' 
-            placeholderTextColor="#888"
+            placeholderTextColor= {appColors.placeholderTextColor}
             className='border-[1px] border-[#888] rounded-[5px] p-3 text-[18px] flex-1'
             keyboardType='numeric'
             value={phone}

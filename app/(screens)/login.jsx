@@ -70,6 +70,7 @@ const LoginScreen = () => {
         style={styles.input}
         placeholder="Số điện thoại"
         value={phone}
+        placeholderTextColor={ appColors.placeholderTextColor }
         onChangeText={setPhone}
         keyboardType="phone-pad"
         autoCapitalize="none"
@@ -79,6 +80,7 @@ const LoginScreen = () => {
 
       <TextInput
         style={styles.input}
+        placeholderTextColor={ appColors.placeholderTextColor }
         placeholder="Mật khẩu"
         value={password}
         onChangeText={setPassword}

@@ -139,7 +139,7 @@ const WelcomeScreen = () => {
 
       <View className="px-7 flex-col gap-5">
         <TouchableHighlight
-          onPress={() => router.push("/(screens)/Login")}
+          onPress={() => router.push("/(screens)/login")}
           className="py-5 rounded-lg"
           style = {{ backgroundColor: appColors.primary }}
           underlayColor="#1e3a8a"
@@ -148,7 +148,7 @@ const WelcomeScreen = () => {
         </TouchableHighlight>
 
         <TouchableHighlight
-          onPress={() => router.push("/(screens)/Register")}
+          onPress={() => router.push("/(screens)/register")}
           className="py-5 bg-slate-200 rounded-lg"
           underlayColor="#e2e8f0"
         >
