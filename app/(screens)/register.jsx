@@ -1,11 +1,14 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { appColors } from '../../constants/appColor'
+import DateTimePicker from '@react-native-community/datetimepicker';
+
+
 
 const RegisterScreen = () => {
   const [step, setStep] = useState(1);
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [name, setName] = useState('');
@@ -15,13 +18,20 @@ const RegisterScreen = () => {
   const [birthday, setBirthday] = useState(new Date());
   const [avatar, setAvatar] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [errMessageSDT, setErrMessageSDT] = useState('')
 
   const handleSendOtp = () => {
-    if (!email && !phone) {
-      Alert.alert('Lỗi', 'Vui lòng nhập email và số điện thoại');
+    const phoneRegex = /^(03|05|07|08|09)\d{8}$/;
+    if (!phone) {
+      // Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại');
+      setErrMessageSDT("Vui lòng nhập số điện thoại")
       return;
     }
-    // Gửi OTP logic ở đây
+    if (!phoneRegex.test(phone)) {
+      // Alert.alert('Lỗi', 'Số điện thoại không hợp lệ. Vui lòng nhập số gồm 10 chữ số và bắt đầu bằng 03, 05, 07, 08 hoặc 09.');
+      setErrMessageSDT("Số điện thoại không hợp lệ. Vui lòng nhập số gồm 10 chữ số và bắt đầu bằng 03, 05, 07, 08 hoặc 09.")
+      return;
+    }
     setStep(2);
   };
 
@@ -77,41 +87,43 @@ const RegisterScreen = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Đăng ký tài khoản</Text>
-      
       {step === 1 && (
         <View style={styles.stepContainer}>
-          <Text style={styles.stepTitle}>Bước 1: Xác minh tài khoản</Text>
-          
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-          />
-          
-          <Text style={styles.orText}>hoặc</Text>
-          
+          <Text style={styles.title}>Nhập số điện thoại</Text>
           <TextInput
             style={styles.input}
             placeholder="Số điện thoại"
+            placeholderTextColor={appColors.placeholderTextColor}
             keyboardType="phone-pad"
             value={phone}
-            onChangeText={setPhone}
+            onChangeText={(number) => {
+              setErrMessageSDT("")
+              setPhone(number)
+            }}
           />
+
+          {
+            errMessageSDT && <Text className = 'text-red-500 mb-4'>
+              {errMessageSDT}
+            </Text>
+          }
           
           <TouchableOpacity style={styles.button} onPress={handleSendOtp}>
             <Text style={styles.buttonText}>Gửi mã xác minh</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => router.back()}>
+          <Text style={styles.loginText}>Đã có tài khoản? Đăng nhập</Text>
+        </TouchableOpacity>
         </View>
       )}
       
       {step === 2 && (
         <View style={styles.stepContainer}>
-          <Text style={styles.stepTitle}>Bước 2: Xác minh OTP</Text>
-          <Text style={styles.instruction}>Mã OTP đã được gửi đến {email || phone}</Text>
+          <Text style={styles.stepTitle}>Nhập mã xác thực</Text>
+          <Text style={{ textAlign: "center", color: appColors.placeholderTextColor }}>Nhập dãy 6 chữ số được gửi đến số điện thoại</Text>
+          <Text style = {{ textAlign: "center", marginTop: 5, fontWeight: 'bold', marginBottom: 20 }}>{phone}</Text>
+
           
           <TextInput
             style={styles.input}
@@ -133,7 +145,7 @@ const RegisterScreen = () => {
       
       {step === 3 && (
         <View style={styles.stepContainer}>
-          <Text style={styles.stepTitle}>Bước 3: Thông tin cá nhân</Text>
+          <Text style={styles.stepTitle}>Thông tin cá nhân</Text>
           
           <TextInput
             style={styles.input}
@@ -166,9 +178,9 @@ const RegisterScreen = () => {
       
       {step === 4 && (
         <View style={styles.stepContainer}>
-          <Text style={styles.stepTitle}>Bước 4: Hoàn thiện hồ sơ</Text>
+          <Text style={styles.stepTitle}>Hoàn thiện hồ sơ</Text>
           
-          <TouchableOpacity style={styles.avatarContainer} onPress={pickAvatar}>
+          {/* <TouchableOpacity style={styles.avatarContainer} onPress={pickAvatar}>
             {avatar ? (
               <Image source={{ uri: avatar }} style={styles.avatar} />
             ) : (
@@ -176,7 +188,7 @@ const RegisterScreen = () => {
                 <Text style={styles.avatarText}>Chọn ảnh đại diện</Text>
               </View>
             )}
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           
           <TouchableOpacity 
             style={styles.dateInput} 
@@ -185,14 +197,16 @@ const RegisterScreen = () => {
             <Text>{birthday.toLocaleDateString()}</Text>
           </TouchableOpacity>
           
-          {/* {showDatePicker && (
+          {showDatePicker && (
             <DateTimePicker
               value={birthday}
+              className = "bg-black"
               mode="date"
-              display="default"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               onChange={onChangeBirthday}
+              textColor="blue"
             />
-          )} */}
+          )}
           
           <View style={styles.genderContainer}>
             <TouchableOpacity 
@@ -222,10 +236,6 @@ const RegisterScreen = () => {
           </TouchableOpacity>
         </View>
       )}
-      
-      <TouchableOpacity onPress={() => router.back()}>
-        <Text style={styles.loginText}>Đã có tài khoản? Đăng nhập</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 };
@@ -233,12 +243,11 @@ const RegisterScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 20,
-    justifyContent: 'center',
+    padding: 30
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '500',
     textAlign: 'center',
     marginBottom: 30,
   },
@@ -263,6 +272,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 15,
     marginBottom: 15,
+    fontSize: 16
   },
   dateInput: {
     height: 50,
@@ -289,11 +299,6 @@ const styles = StyleSheet.create({
   },
   resendText: {
     color: '#1E90FF',
-  },
-  orText: {
-    textAlign: 'center',
-    marginVertical: 10,
-    color: '#666',
   },
   avatarContainer: {
     alignItems: 'center',
