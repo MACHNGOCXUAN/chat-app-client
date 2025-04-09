@@ -151,6 +151,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { appColors } from '../../constants/appColor'
 import DateTimePicker from '@react-native-community/datetimepicker';
 import axiosInstance from '../../utils/axiosInstance';
+import { Ionicons } from '@expo/vector-icons';
 
 
 
@@ -159,20 +160,15 @@ const forgotPassword = () => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
-  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [gender, setGender] = useState('');
-  const [birthday, setBirthday] = useState(new Date());
-  const [avatar, setAvatar] = useState(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [errMessageSDT, setErrMessageSDT] = useState('')
   const [loading, setLoading] = useState(false)
   const [code, setCode] = useState('')
   const [errOTP, setErrOTP] = useState('')
   const [countdown, setCountdown] = useState(30);
   const [errProfile, setErrProfile] = useState('')
-  const [errMessage, setErrMessage] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
 
   useEffect(() => {
@@ -202,6 +198,9 @@ const forgotPassword = () => {
       const checkResponse = await axiosInstance.post("/checkEmail", {
         email: email
       });
+
+      console.log(checkResponse);
+      
   
       if (!checkResponse.data.success) {
         setErrMessageSDT(checkResponse.data.message);
@@ -239,8 +238,8 @@ const forgotPassword = () => {
     setStep(3);
   };
 
-  const handleUpdatePassword = () => {
-    if (!name || !password || !confirmPassword) {
+  const handleUpdatePassword = async () => {
+    if (!password || !confirmPassword) {
       setErrProfile("Vui lòng điền đầy đủ thông tin")
       return;
     }
@@ -248,14 +247,33 @@ const forgotPassword = () => {
       setErrProfile("Mật khẩu không khớp")
       return;
     }
-    Alert.alert("Đăng ký thành công", "Cập nhật thành công")
+
+    setLoading(true)
+    try {
+      const updatePassword = await axiosInstance.put("/forgotPasswrod", {
+        email: email,
+        password
+      })
+
+      if(!updatePassword.data.success) {
+        setErrMessageSDT(error.response?.data?.error || error.error || 'Không thể cập nhật mật khẩu');
+      }
+
+      Alert.alert("Thông báo", "Cập nhật thành công")
+      router.replace('/(screens)/login')
+    } catch (error) {
+      console.log('Login error:', error);
+      setErrMessageSDT(error.response?.data?.message || error.message || 'Không thể cập nhật mật khẩu');
+    } finally {
+      setLoading(false);
+    } 
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {step === 1 && (
         <View style={styles.stepContainer}>
-          <Text style={styles.title}>Nhập số điện thoại và email</Text>
+          <Text style={styles.title}>Nhập email</Text>
 
           <TextInput
             style={styles.input}
@@ -328,27 +346,45 @@ const forgotPassword = () => {
         <View style={styles.stepContainer}>
           <Text style={styles.stepTitle}>Mật khẩu mới</Text>
           
-          <TextInput
-            style={styles.input}
-            placeholder="Nhập mật khẩu mới"
-            value={name}
-            onChangeText={(text) => {
-              setErrProfile("")
-              setName(text)
-            }}
-          />
+          <View style={styles.inputpassword}>
+            <TextInput
+              placeholderTextColor={ appColors.placeholderTextColor }
+              placeholder="Nhập mật khẩu mới"
+              value={password}
+              onChangeText={(text) => {
+                setErrProfile("")
+                setPassword(text)
+              }}
+              secureTextEntry={!showPassword}
+              returnKeyType="done"
+              style = {{ flex: 1 }}
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={appColors.primary}/>
+            </TouchableOpacity>
+          </View>
           
-          <TextInput
-            style={styles.input}
-            placeholder="Nhập lại mật khẩu mới"
-            secureTextEntry
-            value={password}
-            placeholderTextColor={appColors.placeholderTextColor}
-            onChangeText={(text) => {
-              setErrProfile("")
-              setPassword(text)
-            }}
-          />
+          <View style={styles.inputpassword}>
+            <TextInput
+              placeholderTextColor={ appColors.placeholderTextColor }
+              placeholder="Nhập lại mật khẩu mới"
+              value={confirmPassword}
+              onChangeText={(text) => {
+                setErrProfile("")
+                setConfirmPassword(text)
+              }}
+              secureTextEntry={!showPassword}
+              returnKeyType="done"
+              style = {{ flex: 1 }}
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={appColors.primary}/>
+            </TouchableOpacity>
+          </View>
 
           {
             errProfile && <Text className = 'text-red-500 mb-4'>
@@ -398,6 +434,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginBottom: 15,
     fontSize: 16
+  },
+  inputpassword: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 15,
+    fontSize: 16,
+    flexDirection: "row",
+    justifyContent: "space-between"
   },
   dateInput: {
     height: 50,
