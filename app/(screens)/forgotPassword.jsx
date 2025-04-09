@@ -1,3 +1,149 @@
+// import { router } from 'expo-router'
+// import React, { useState } from 'react'
+// import { View, Text, TextInput, TouchableHighlight, StyleSheet, ActivityIndicator, Keyboard } from 'react-native'
+// import AsyncStorage from "@react-native-async-storage/async-storage"
+// import axiosInstance from '../../utils/axiosInstance'
+// import { useDispatch } from 'react-redux'
+// import { addAuth } from '../../stores/reducers/authReducer'
+// import { appColors } from '../../constants/appColor'
+
+// const forgotPassword = () => {
+//   const [email, setEmail] = useState('')
+//   const [errMessage, setErrMessage] = useState('')
+//   const [loading, setLoading] = useState(false)
+
+//   const handleLogin = async () => {
+//     if (!validateInputs()) return
+    
+//     Keyboard.dismiss()
+//     setErrMessage("")
+//     setLoading(true)
+    
+//     try {
+//       const res = await axiosInstance.post("/forgetPassword", {
+//         phoneNumber: phone,
+//         password
+//       })
+
+//       dispatch(addAuth(res.data.data));
+//       await AsyncStorage.setItem(
+//         "auth",
+//         JSON.stringify(res.data.data)
+//       );
+//       router.replace('/(tabs)')
+//     } catch (error) {
+//       console.log('Login error:', error);
+//       setErrMessage(error.response?.data?.message || error.error || 'Đăng nhập thất bại');
+//     } finally {
+//       setLoading(false);
+//     }  
+//   }
+
+//   const isDisabled = !phone.trim() || !password.trim() || loading;
+
+//   return (
+//     <View style={styles.container}>
+//       <Text style={styles.title}>Quên mật khẩu</Text>
+
+//       <Text style={{ marginBottom: 10 }}>Nhập email để lấy lại mật khẩu</Text>
+
+//       <TextInput
+//         style={styles.input}
+//         placeholder="Nhập email"
+//         value={phone}
+//         placeholderTextColor={ appColors.placeholderTextColor }
+//         onChangeText={setEmail}
+//         keyboardType="email-address"
+//         autoCapitalize="none"
+//         autoFocus
+//         returnKeyType="next"
+//       />
+
+//       {errMessage ? (
+//         <Text style={styles.errorText}>{errMessage}</Text>
+//       ) : null}
+
+//       <TouchableHighlight
+//         style={[styles.loginButton, isDisabled && styles.disabledButton]}
+//         onPress={handleLogin}
+//         disabled={isDisabled}
+//         underlayColor="#1d4ed8"
+//       >
+//         {loading ? (
+//           <ActivityIndicator size="small" color="#fff" />
+//         ) : (
+//           <Text style={styles.loginButtonText}>Đăng nhập</Text>
+//         )}
+//       </TouchableHighlight>
+
+//       <TouchableHighlight
+//         style={styles.registerLink}
+//         underlayColor="#e2e8f0"
+//         onPress={() => router.push('/(screens)/Register')}
+//         disabled={loading}
+//       >
+//         <Text style={styles.registerLinkText}>Tạo tài khoản mới</Text>
+//       </TouchableHighlight>
+//     </View>
+//   )
+// }
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     padding: 20,
+//     justifyContent: 'flex-start',
+//     backgroundColor: '#fff',
+//   },
+//   title: {
+//     fontSize: 24,
+//     fontWeight: 'bold',
+//     color: appColors.primary,
+//     textAlign: 'center',
+//     marginBottom: 20,
+//   },
+//   input: {
+//     borderWidth: 1,
+//     borderColor: '#ccc',
+//     borderRadius: 8,
+//     padding: 15,
+//     marginBottom: 15,
+//     fontSize: 16,
+//   },
+//   loginButton: {
+//     backgroundColor: appColors.primary,
+//     padding: 15,
+//     borderRadius: 8,
+//     alignItems: 'center',
+//   },
+//   disabledButton: {
+//     opacity: 0.6,
+//   },
+//   loginButtonText: {
+//     color: '#fff',
+//     fontSize: 16,
+//     fontWeight: 'bold',
+//   },
+//   registerLink: {
+//     marginTop: 15,
+//     alignItems: 'center',
+//     padding: 10,
+//   },
+//   registerLinkText: {
+//     color: '#1e3a8a',
+//     fontSize: 16,
+//   },
+//   errorText: {
+//     color: '#ef4444',
+//     marginBottom: 15,
+//     textAlign: 'center',
+//   },
+// })
+
+// export default forgotPassword
+
+
+
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert, Platform, ActivityIndicator } from 'react-native';
@@ -8,7 +154,7 @@ import axiosInstance from '../../utils/axiosInstance';
 
 
 
-const RegisterScreen = () => {
+const forgotPassword = () => {
   const [step, setStep] = useState(1);
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -38,19 +184,7 @@ const RegisterScreen = () => {
 
 
   const handleSendOtp = async () => {
-    const phoneRegex = /^(03|05|07|08|09)\d{8}$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!phone) {
-      // Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại');
-      setErrMessageSDT("Vui lòng nhập số điện thoại")
-      return;
-    }
-    if (!phoneRegex.test(phone)) {
-      // Alert.alert('Lỗi', 'Số điện thoại không hợp lệ. Vui lòng nhập số gồm 10 chữ số và bắt đầu bằng 03, 05, 07, 08 hoặc 09.');
-      setErrMessageSDT("Số điện thoại không hợp lệ. Vui lòng nhập số gồm 10 chữ số và bắt đầu bằng 03, 05, 07, 08 hoặc 09.")
-      return;
-    }
 
     if (!email) {
       setErrMessageSDT("Vui lòng nhập email");
@@ -65,8 +199,7 @@ const RegisterScreen = () => {
     setLoading(true)
     try {
 
-      const checkResponse = await axiosInstance.post("/checkPhoneAndEmail", {
-        phoneNumber: phone,
+      const checkResponse = await axiosInstance.post("/checkEmail", {
         email: email
       });
   
@@ -78,6 +211,7 @@ const RegisterScreen = () => {
       const response = await axiosInstance.post("/verify", {
         email
       })
+
       setCode(response.data.data.code)
       setCountdown(30);
       setStep(2);
@@ -105,7 +239,7 @@ const RegisterScreen = () => {
     setStep(3);
   };
 
-  const handleRegister = () => {
+  const handleUpdatePassword = () => {
     if (!name || !password || !confirmPassword) {
       setErrProfile("Vui lòng điền đầy đủ thông tin")
       return;
@@ -114,86 +248,7 @@ const RegisterScreen = () => {
       setErrProfile("Mật khẩu không khớp")
       return;
     }
-    setStep(4);
-  };
-
-  const handleCompleteProfile = async () => {
-    try {
-      if (!gender) {
-        setErrMessage('Vui lòng chọn giới tính');
-        return;
-      }
-      
-  
-      const today = new Date();
-      
-      let age = today.getFullYear() - birthday.getFullYear();
-      const monthDiff = today.getMonth() - birthday.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthday.getDate())) {
-        age--;
-      }
-      if (age < 18) {
-        setErrMessage('Bạn phải từ 18 tuổi trở lên để đăng ký tài khoản');
-        return;
-      }
-
-      console.log("age");
-      
-
-      
-      const year = birthday.getFullYear();
-      const month = String(birthday.getMonth() + 1).padStart(2, '0')
-      const day = String(birthday.getDate()).padStart(2, '0')
-      const formattedDate = `${year}/${month}/${day}`
-
-      
-
-      setLoading(true);
-      setErrMessage('');
-  
-      const data = {
-        username: name,
-        phoneNumber: phone,
-        email: email,
-        password: password,
-        dateOfBirth: formattedDate,
-        gender: gender
-      };
-  
-      const response = await axiosInstance.post("/register", data);
-      
-      
-      if (response.data.user) {
-        Alert.alert('Thành công', 'Đăng ký tài khoản thành công');
-        router.replace('/(screens)/login');
-      }
-    } catch (error) {
-      setErrMessage(
-        error.error ||
-        'Đăng ký thất bại. Vui lòng thử lại sau'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const pickAvatar = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setAvatar(result.assets[0].uri);
-    }
-  };
-
-  const onChangeBirthday = (event, selectedDate) => {
-    const currentDate = selectedDate || birthday;
-    setShowDatePicker(false);
-    setBirthday(currentDate);
+    Alert.alert("Đăng ký thành công", "Cập nhật thành công")
   };
 
   return (
@@ -201,17 +256,6 @@ const RegisterScreen = () => {
       {step === 1 && (
         <View style={styles.stepContainer}>
           <Text style={styles.title}>Nhập số điện thoại và email</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Số điện thoại"
-            placeholderTextColor={appColors.placeholderTextColor}
-            keyboardType="phone-pad"
-            value={phone}
-            onChangeText={(number) => {
-              setErrMessageSDT("")
-              setPhone(number)
-            }}
-          />
 
           <TextInput
             style={styles.input}
@@ -240,7 +284,6 @@ const RegisterScreen = () => {
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => router.push('/(screens)/login')}>
-          <Text style={styles.loginText}>Đã có tài khoản? Đăng nhập</Text>
         </TouchableOpacity>
         </View>
       )}
@@ -283,11 +326,11 @@ const RegisterScreen = () => {
       
       {step === 3 && (
         <View style={styles.stepContainer}>
-          <Text style={styles.stepTitle}>Thông tin cá nhân</Text>
+          <Text style={styles.stepTitle}>Mật khẩu mới</Text>
           
           <TextInput
             style={styles.input}
-            placeholder="Họ và tên"
+            placeholder="Nhập mật khẩu mới"
             value={name}
             onChangeText={(text) => {
               setErrProfile("")
@@ -297,25 +340,13 @@ const RegisterScreen = () => {
           
           <TextInput
             style={styles.input}
-            placeholder="Mật khẩu"
+            placeholder="Nhập lại mật khẩu mới"
             secureTextEntry
             value={password}
             placeholderTextColor={appColors.placeholderTextColor}
             onChangeText={(text) => {
               setErrProfile("")
               setPassword(text)
-            }}
-          />
-          
-          <TextInput
-            style={styles.input}
-            placeholder="Xác nhận mật khẩu"
-            secureTextEntry
-            placeholderTextColor={appColors.placeholderTextColor}
-            value={confirmPassword}
-            onChangeText={(text) => {
-              setErrProfile("")
-              setConfirmPassword(text)
             }}
           />
 
@@ -325,79 +356,8 @@ const RegisterScreen = () => {
             </Text>
           }
           
-          <TouchableOpacity style={styles.button} onPress={handleRegister}>
-            <Text style={styles.buttonText}>Tiếp tục</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      
-      {step === 4 && (
-        <View style={styles.stepContainer}>
-          <Text style={styles.stepTitle}>Hoàn thiện hồ sơ</Text>
-          
-          {/* <TouchableOpacity style={styles.avatarContainer} onPress={pickAvatar}>
-            {avatar ? (
-              <Image source={{ uri: avatar }} style={styles.avatar} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarText}>Chọn ảnh đại diện</Text>
-              </View>
-            )}
-          </TouchableOpacity> */}
-          
-          <TouchableOpacity 
-            style={styles.dateInput} 
-            onPress={() => setShowDatePicker(true)}
-          >
-            <Text>{birthday.toLocaleDateString()}</Text>
-          </TouchableOpacity>
-          
-          {showDatePicker && (
-            <DateTimePicker
-              value={birthday}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
-              locale="vi-VN"
-              onChange={onChangeBirthday}
-              textColor="red"
-            />
-          )}
-          
-          <View style={styles.genderContainer}>
-            <TouchableOpacity 
-              style={[styles.genderButton, gender === 'male' && styles.genderSelected]}
-              onPress={() => setGender('male')}
-            >
-              <Text>Nam</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.genderButton, gender === 'female' && styles.genderSelected]}
-              onPress={() => setGender('female')}
-            >
-              <Text>Nữ</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.genderButton, gender === 'other' && styles.genderSelected]}
-              onPress={() => setGender('other')}
-            >
-              <Text>Khác</Text>
-            </TouchableOpacity>
-          </View>
-
-          {
-            errMessage && <Text className = 'text-red-500 mb-4'>
-              {errMessage}
-            </Text>
-          }
-          
-          <TouchableOpacity style={styles.button} onPress={handleCompleteProfile}>
-            {loading ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Hoàn tất đăng ký</Text>
-            )}
+          <TouchableOpacity style={styles.button} onPress={handleUpdatePassword}>
+            <Text style={styles.buttonText}>Cập nhật</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -510,4 +470,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RegisterScreen;
+export default forgotPassword;

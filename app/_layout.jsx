@@ -77,6 +77,20 @@ export default function RootLayout() {
             )
           })}
         />
+        <Stack.Screen
+          name="(screens)/forgotPassword"
+          options={({ navigation }) => ({
+            title: "",
+            headerShown: true,
+            headerStyle: { backgroundColor: appColors.primary },
+            headerLeft: () => (
+              <View style={{ flexDirection: 'row', gap: 20, alignItems: 'center' }}>
+                <MaterialIcons color={appColors.white} onPress={() => navigation.goBack()} name="west" size={25}/>
+                <Text style={{ fontWeight: '600', fontSize: 18, color: appColors.white }}>Lấy lại mật khẩu</Text>
+              </View>
+            )
+          })}
+        />
       </Stack>
     </Provider>
   );

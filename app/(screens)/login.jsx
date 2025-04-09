@@ -1,6 +1,6 @@
 import { router } from 'expo-router'
 import React, { useState } from 'react'
-import { View, Text, TextInput, TouchableHighlight, StyleSheet, ActivityIndicator, Keyboard } from 'react-native'
+import { View, Text, TextInput, TouchableHighlight, StyleSheet, ActivityIndicator, Keyboard, TouchableOpacity } from 'react-native'
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import axiosInstance from '../../utils/axiosInstance'
 import { useDispatch } from 'react-redux'
@@ -93,6 +93,10 @@ const LoginScreen = () => {
         <Text style={styles.errorText}>{errMessage}</Text>
       ) : null}
 
+      <TouchableOpacity onPress={() => router.push('/(screens)/forgotPassword')}>
+        <Text style={styles.registerLinkText}>Lấy lại mật khẩu</Text>
+      </TouchableOpacity>
+
       <TouchableHighlight
         style={[styles.loginButton, isDisabled && styles.disabledButton]}
         onPress={handleLogin}
@@ -109,7 +113,7 @@ const LoginScreen = () => {
       <TouchableHighlight
         style={styles.registerLink}
         underlayColor="#e2e8f0"
-        onPress={() => router.push('/(screens)/Register')}
+        onPress={() => router.push('/(screens)/register')}
         disabled={loading}
       >
         <Text style={styles.registerLinkText}>Tạo tài khoản mới</Text>
@@ -160,8 +164,9 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   registerLinkText: {
-    color: '#1e3a8a',
+    color: appColors.primary,
     fontSize: 16,
+    marginBottom: 10
   },
   errorText: {
     color: '#ef4444',
