@@ -6,23 +6,32 @@ import axiosInstance from '../../utils/axiosInstance'
 import { useDispatch } from 'react-redux'
 import { addAuth } from '../../stores/reducers/authReducer'
 import { appColors } from '../../constants/appColor'
+import { Ionicons } from '@expo/vector-icons'
 
 const LoginScreen = () => {
-  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errMessage, setErrMessage] = useState('')
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const validateInputs = () => {
-    if (!phone.trim()) {
+    if (!email.trim()) {
       setErrMessage('Vui lòng nhập số điện thoại');
       return false
     }
     
-    if (!/^\d+$/.test(phone)) {
-      setErrMessage('Số điện thoại chỉ được chứa số');
-      return false
+    // if (!/^\d+$/.test(phone)) {
+    //   setErrMessage('Số điện thoại chỉ được chứa số');
+    //   return false
+    // }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      setErrMessage("Email không hợp lệ");
+      return;
     }
     
     if (!password.trim()) {
@@ -42,7 +51,7 @@ const LoginScreen = () => {
     
     try {
       const res = await axiosInstance.post("/login", {
-        phoneNumber: phone,
+        email,
         password
       })
 
@@ -60,7 +69,7 @@ const LoginScreen = () => {
     }  
   }
 
-  const isDisabled = !phone.trim() || !password.trim() || loading;
+  const isDisabled = !email.trim() || !password.trim() || loading;
 
   return (
     <View style={styles.container}>
@@ -68,26 +77,39 @@ const LoginScreen = () => {
 
       <TextInput
         style={styles.input}
-        placeholder="Số điện thoại"
-        value={phone}
+        placeholder="Nhập email"
+        value={email}
         placeholderTextColor={ appColors.placeholderTextColor }
-        onChangeText={setPhone}
-        keyboardType="phone-pad"
+        onChangeText={(text) => {
+          setErrMessage("")
+          setEmail(text)
+        }}
+        keyboardType="email-address"
         autoCapitalize="none"
         autoFocus
         returnKeyType="next"
       />
 
-      <TextInput
-        style={styles.input}
-        placeholderTextColor={ appColors.placeholderTextColor }
-        placeholder="Mật khẩu"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        returnKeyType="done"
-        onSubmitEditing={handleLogin}
-      />
+      <View style={styles.inputpassword}>
+        <TextInput
+          placeholderTextColor={ appColors.placeholderTextColor }
+          placeholder="Mật khẩu"
+          value={password}
+          onChangeText={(text) => {
+            setErrMessage("")
+            setPassword(text)
+          }}
+          secureTextEntry={!showPassword}
+          returnKeyType="done"
+          onSubmitEditing={handleLogin}
+          style = {{ flex: 1 }}
+        />
+        <TouchableOpacity
+          onPress={() => setShowPassword(!showPassword)}
+        >
+          <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={appColors.primary}/>
+        </TouchableOpacity>
+      </View>
 
       {errMessage ? (
         <Text style={styles.errorText}>{errMessage}</Text>
@@ -143,6 +165,16 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
     fontSize: 16,
+  },
+  inputpassword: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 15,
+    fontSize: 16,
+    flexDirection: "row",
+    justifyContent: "space-between"
   },
   loginButton: {
     backgroundColor: appColors.primary,

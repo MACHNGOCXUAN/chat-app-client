@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { appColors } from '../../constants/appColor'
 import DateTimePicker from '@react-native-community/datetimepicker';
 import axiosInstance from '../../utils/axiosInstance';
+import { Ionicons } from '@expo/vector-icons';
 
 
 
@@ -27,6 +28,7 @@ const RegisterScreen = () => {
   const [countdown, setCountdown] = useState(30);
   const [errProfile, setErrProfile] = useState('')
   const [errMessage, setErrMessage] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
 
   useEffect(() => {
@@ -295,7 +297,7 @@ const RegisterScreen = () => {
             }}
           />
           
-          <TextInput
+          {/* <TextInput
             style={styles.input}
             placeholder="Mật khẩu"
             secureTextEntry
@@ -317,7 +319,47 @@ const RegisterScreen = () => {
               setErrProfile("")
               setConfirmPassword(text)
             }}
-          />
+          /> */}
+
+          <View style={styles.inputpassword}>
+            <TextInput
+              placeholderTextColor={ appColors.placeholderTextColor }
+              placeholder="Nhập mật khẩu"
+              value={password}
+              onChangeText={(text) => {
+                setErrProfile("")
+                setPassword(text)
+              }}
+              secureTextEntry={!showPassword}
+              returnKeyType="done"
+              style = {{ flex: 1 }}
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={appColors.primary}/>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.inputpassword}>
+            <TextInput
+              placeholderTextColor={ appColors.placeholderTextColor }
+              placeholder="Nhập lại mật khẩu"
+              value={confirmPassword}
+              onChangeText={(text) => {
+                setErrProfile("")
+                setConfirmPassword(text)
+              }}
+              secureTextEntry={!showPassword}
+              returnKeyType="done"
+              style = {{ flex: 1 }}
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={appColors.primary}/>
+            </TouchableOpacity>
+          </View>
 
           {
             errProfile && <Text className = 'text-red-500 mb-4'>
@@ -438,6 +480,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginBottom: 15,
     fontSize: 16
+  },
+  inputpassword: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 15,
+    fontSize: 16,
+    flexDirection: "row",
+    justifyContent: "space-between"
   },
   dateInput: {
     height: 50,
