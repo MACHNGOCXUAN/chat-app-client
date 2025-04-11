@@ -96,8 +96,8 @@ const RegisterScreen = () => {
       setErrOTP("Vui lòng nhập mã OTP!")
       return;
     }
-    if (otp.length !== 4) {
-      setErrOTP("Mã OTP phải có 4 chữ số")
+    if (otp.length !== 6) {
+      setErrOTP("Mã OTP phải có 6 chữ số")
       return;
     }
     if( otp != code) {
