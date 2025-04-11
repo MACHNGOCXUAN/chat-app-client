@@ -4,7 +4,7 @@ import { Platform, StyleSheet } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import CustomModal from './CustomModal';
 import commonFuc, { openCamera, updateAvatar } from '../utils/commonFuc';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 const AvatarModal = ({
   modalVisible = false,
@@ -34,7 +34,9 @@ const AvatarModal = ({
 
   const urlUpdateName = isCoverImage ? "updateImageCover" : "updateAvatar"
 
-  console.log("isCoverImage: ", urlUpdateName);
+  const dispatch = useDispatch()
+
+  const email = user?.email
 
   return (
     <CustomModal
@@ -61,7 +63,7 @@ const AvatarModal = ({
         containerStyle={styles.button}
         titleStyle={styles.title}
         buttonStyle={{ justifyContent: 'flex-start' }}
-        onPress={() => openCamera(onUploadFile, isCoverImage, user.email, urlUpdateName)}
+        onPress={() => dispatch(openCamera({email, urlUpdateName}))}
       />
       <Button
         title="Chọn ảnh từ thiết bị"
@@ -71,7 +73,9 @@ const AvatarModal = ({
         containerStyle={[styles.button, styles.buttonBottom]}
         titleStyle={styles.title}
         buttonStyle={{ justifyContent: 'flex-start' }}
-        onPress={() => updateAvatar(user?.email, urlUpdateName)}
+        onPress={() => {
+          dispatch(updateAvatar({email, urlUpdateName}))
+        }}
       />
     </CustomModal>
   );

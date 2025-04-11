@@ -18,7 +18,7 @@ import UpdateUserProfileModal from '../profile/modal/UpdateUserProfileModal';
 import ViewImageModal from '../profile/modal/ViewImageModal';
 import { useSelector, useDispatch } from 'react-redux';
 import axiosInstance from '../../utils/axiosInstance';
-import { removeAuth } from '../../stores/reducers/authReducer';
+import { removeAuth, updateUser } from '../../stores/reducers/authReducer';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from 'expo-router';
 
@@ -213,6 +213,23 @@ export default function MeScreen() {
     isCoverImageRef.current = isCoverImage;
     setIsImageVisible(true);
   };
+
+  // const onUploadFile = (data) => {
+  //   if (data?.success) {
+  //     // Cập nhật local state (nếu cần)
+  //     setUserProfile(prev => ({
+  //       ...prev,
+  //       avatar: data.avatarURL || prev.avatar,
+  //       coverImage: data.coverImage || prev.coverImage,
+  //     }));
+
+  //     // Cập nhật Redux store
+  //     dispatch(updateUser({
+  //       avatarURL: data.avatarURL, // Cập nhật avatar
+  //       coverImage: data.coverImage, // Cập nhật cover (nếu có)
+  //     }));
+  //   }
+  // };
 
   return (
     <SafeAreaView style={styles.container}>
