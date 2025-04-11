@@ -3,7 +3,8 @@ import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import CustomModal from './CustomModal';
-import commonFuc,{ openCamera, showImagePicker } from '../utils/commonFuc';
+import commonFuc,{ openCamera, updateAvatar } from '../utils/commonFuc';
+import { useSelector } from 'react-redux';
 
 const AvatarModal = ({
   modalVisible = false,
@@ -15,6 +16,7 @@ const AvatarModal = ({
   const handleCloseModal = () => {
     setModalVisible(false);
   };
+  
 
   const handleOnSubmit = async values => {
     const { password } = values;
@@ -26,6 +28,12 @@ const AvatarModal = ({
     onViewImage(isCoverImage);
     handleCloseModal();
   };
+
+  const { user } = useSelector(state => state.auth)
+
+  const urlUpdateName = isCoverImage ? "updateImageCover" : "updateAvatar"
+
+  console.log("isCoverImage: ", urlUpdateName);
 
   return (
     <CustomModal
@@ -52,7 +60,7 @@ const AvatarModal = ({
         containerStyle={styles.button}
         titleStyle={styles.title}
         buttonStyle={{ justifyContent: 'flex-start' }}
-        onPress={() => openCamera(onUploadFile, isCoverImage)}
+        onPress={() => openCamera(onUploadFile, isCoverImage, user.email, urlUpdateName)}
       />
       <Button
         title="Chọn ảnh từ thiết bị"
@@ -62,7 +70,7 @@ const AvatarModal = ({
         containerStyle={[styles.button, styles.buttonBottom]}
         titleStyle={styles.title}
         buttonStyle={{ justifyContent: 'flex-start' }}
-        onPress={() => showImagePicker(onUploadFile, isCoverImage)}
+        onPress={() => updateAvatar(user?.email, urlUpdateName)}
       />
     </CustomModal>
   );
