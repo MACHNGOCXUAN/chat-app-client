@@ -9,14 +9,22 @@ import {
   Text,
   TouchableOpacity,
   View,
-  TextInput, 
+  TextInput,
+  Alert,
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
+import axiosInstance from '../../../utils/axiosInstance';
+import { useSelector } from 'react-redux';
+import Spinner from 'react-native-loading-spinner-overlay';
+import { useState } from 'react';
 
 import { logoutAllValid } from '../utils/validation';
 import CustomModal from './CustomModal';
 
 const LogoutAllModal = ({ modalVisible = false, setModalVisible = null }) => {
+  const [loading, setLoading] = useState(false);
+  const { user } = useSelector(state => state.auth);
+
   const handleCloseModal = () => {
     setModalVisible(false);
   };
@@ -24,7 +32,27 @@ const LogoutAllModal = ({ modalVisible = false, setModalVisible = null }) => {
   const handleOnSubmit = async values => {
     const { password } = values;
 
-    handleCloseModal();
+    try {
+      setLoading(true);
+
+      const response = await axiosInstance.post('/logout', {
+        email: user.email,
+        password: password
+      });
+
+      if (response.data.message) {
+        Alert.alert('Thành công', 'Đã đăng xuất khỏi tất cả thiết bị');
+        handleCloseModal();
+      }
+    } catch (error) {
+      console.error('Logout all error:', error);
+      Alert.alert(
+        'Lỗi',
+        error.error || 'Không thể đăng xuất khỏi các thiết bị khác. Vui lòng thử lại sau.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -33,6 +61,7 @@ const LogoutAllModal = ({ modalVisible = false, setModalVisible = null }) => {
       onCloseModal={handleCloseModal}
       title="Đăng xuất ra khỏi các thiết bị khác"
     >
+      <Spinner visible={loading} textContent="Đang xử lý..." />
       <Formik
         initialValues={logoutAllValid.initial}
         validationSchema={logoutAllValid.validationSchema}

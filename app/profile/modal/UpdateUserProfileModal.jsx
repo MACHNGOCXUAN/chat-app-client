@@ -7,23 +7,50 @@ import {
   Text,
   TextInput,
   View,
+  Alert,
 } from 'react-native';
 import { Button, CheckBox } from 'react-native-elements';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { userProfileValid } from '../utils/validation';
 import CustomModal from './CustomModal';
+import axiosInstance from '../../../utils/axiosInstance';
+import { useDispatch, useSelector } from 'react-redux';
+import { addAuth } from '../../../stores/reducers/authReducer';
 
 const UpdateUserProfileModal = ({ modalVisible = false, setModalVisible = null, userProfile = {} }) => {
+  const dispatch = useDispatch();
+  const { user } = useSelector(state => state.auth);
   const [genderValue, setGenderValue] = useState(userProfile?.gender || false);
   const [show, setShow] = useState(false);
   const [dateOfBirth, setDateOfBirth] = useState(new Date());
   const [dobTitle, setDobTitle] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const date = userProfile?.dateOfBirth;
-    const dob = new Date(date?.year, date?.month - 1, date?.day);
-    setDobTitle(handleDateOfBirth(dob));
-    setDateOfBirth(dob);
+    if (userProfile?.dateOfBirth) {
+      let dob;
+
+    
+      if (userProfile.dateOfBirth instanceof Date) {
+        dob = userProfile.dateOfBirth;
+      } else if (typeof userProfile.dateOfBirth === 'string') {
+  
+        dob = new Date(userProfile.dateOfBirth);
+      } else if (userProfile.dateOfBirth.year) {
+   
+        dob = new Date(
+          userProfile.dateOfBirth.year,
+          userProfile.dateOfBirth.month - 1,
+          userProfile.dateOfBirth.day + 1
+        );
+      } else {
+      
+        dob = new Date();
+      }
+
+      setDobTitle(handleDateOfBirth(dob));
+      setDateOfBirth(dob);
+    }
   }, [modalVisible, userProfile]);
 
   const initialValues = {
@@ -46,15 +73,36 @@ const UpdateUserProfileModal = ({ modalVisible = false, setModalVisible = null, 
 
   const handleUpdateUserProfile = async profile => {
     try {
-      const dateOfBirthObj = {
-        day: dateOfBirth.getDate(),
-        month: dateOfBirth.getMonth() + 1,
-        year: dateOfBirth.getFullYear(),
+      setLoading(true);
+
+
+      const dateOfBirthObj = new Date(dateOfBirth);
+
+      const updateData = {
+        _id: user._id, 
+        username: profile.name,
+        gender: genderValue ? "female" : "male", 
+        dateOfBirth: dateOfBirthObj,
+        email: user.email 
       };
-      console.log("Updating profile: ", { name: profile.name, gender: genderValue, dateOfBirth: dateOfBirthObj });
-      handleCloseModal();
+
+      console.log('Update profile data:', updateData);
+
+      const response = await axiosInstance.put('/updateProfile', updateData);
+
+      if (response.data.user) {
+      
+        dispatch(addAuth({ user: response.data.user }));
+        Alert.alert('Thành công', 'Cập nhật thông tin thành công');
+        handleCloseModal();
+      } else {
+        Alert.alert('Lỗi', response.data.message || 'Có lỗi xảy ra khi cập nhật thông tin');
+      }
     } catch (error) {
-      console.error('Update profile: ', error);
+      console.error('Update profile error: ', error);
+      Alert.alert('Lỗi', error.message || 'Có lỗi xảy ra khi cập nhật thông tin');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -66,14 +114,33 @@ const UpdateUserProfileModal = ({ modalVisible = false, setModalVisible = null, 
   };
 
   const hideDatePicker = () => {
-    console.log("Hiding date picker...");
     setShow(false);
   };
 
   const handleOpenDatePicker = () => {
-    const date = userProfile?.dateOfBirth;
-    const dob = new Date(date?.year, date?.month - 1, date?.day);console.log("Opening date picker...");
-    setDateOfBirth(dob);
+    if (userProfile?.dateOfBirth) {
+      let dob;
+
+    
+      if (userProfile.dateOfBirth instanceof Date) {
+        dob = userProfile.dateOfBirth;
+      } else if (typeof userProfile.dateOfBirth === 'string') {
+      
+        dob = new Date(userProfile.dateOfBirth);
+      } else if (userProfile.dateOfBirth.year) {
+    
+        dob = new Date(
+          userProfile.dateOfBirth.year,
+          userProfile.dateOfBirth.month - 1,
+          userProfile.dateOfBirth.day
+        );
+      } else {
+      
+        dob = new Date();
+      }
+
+      setDateOfBirth(dob);
+    }
     setShow(true);
   };
 
@@ -142,8 +209,8 @@ const UpdateUserProfileModal = ({ modalVisible = false, setModalVisible = null, 
                       type="clear"
                       title={dobTitle}
                       onPress={handleOpenDatePicker}
-                      titleStyle={{color: '#000'}}
-                      containerStyle={{marginLeft: 10}}
+                      titleStyle={{ color: '#000' }}
+                      containerStyle={{ marginLeft: 10 }}
                     />
                   </View>
                 </View>
@@ -156,9 +223,10 @@ const UpdateUserProfileModal = ({ modalVisible = false, setModalVisible = null, 
                     containerStyle={{ marginRight: 20 }}
                   />
                   <Button
-                    title="Cập nhật"
+                    title={loading ? "Đang cập nhật..." : "Cập nhật"}
                     onPress={handleSubmit}
                     type="clear"
+                    disabled={loading}
                   />
                 </View>
               </>
@@ -166,14 +234,13 @@ const UpdateUserProfileModal = ({ modalVisible = false, setModalVisible = null, 
           }}
         </Formik>
         <DateTimePickerModal
-  isVisible={show}
-  date={dateOfBirth}
-  mode="date"
-  onConfirm={handleConfirm}
-  onCancel={hideDatePicker}
-/>
+          isVisible={show}
+          date={dateOfBirth}
+          mode="date"
+          onConfirm={handleConfirm}
+          onCancel={hideDatePicker}
+        />
       </CustomModal>
-      
     </>
   );
 };
