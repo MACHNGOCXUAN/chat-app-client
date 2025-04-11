@@ -35,11 +35,11 @@ export default function MeScreen() {
 
   const [userProfile, setUserProfile] = useState({
     avatar: user?.avatarURL,
-    coverImage: 'https://i.ibb.co/1GtXD3pd/favicon1.png',
+    coverImage: user?.coverImage,
     name: user?.username,
     gender: false,
     dateOfBirth: { day: 24, month: 9, year: 2003},
-    username: 'vuongcong276@gmail.com',
+    username: user.email,
   });
 
   const [isUpdateProfile, setIsUpdateProfile] = useState(false);
