@@ -14,8 +14,8 @@ const DEFAULT_IMAGE_MODAL = {
   content: [],
   isImage: true,
 };
-const ERROR_MESSAGE = 'Đã có lỗi xảy ra'; 
-const ViewImageModal = ({ imageProps = DEFAULT_IMAGE_MODAL, setImageProps = () => {} }) => {
+const ERROR_MESSAGE = 'Đã có lỗi xảy ra';
+const ViewImageModal = ({ imageProps = DEFAULT_IMAGE_MODAL, setImageProps = () => { } }) => {
   const handleCloseModal = () => {
     setImageProps(DEFAULT_IMAGE_MODAL); // reset modal
   };
@@ -33,13 +33,13 @@ const ViewImageModal = ({ imageProps = DEFAULT_IMAGE_MODAL, setImageProps = () =
           }}
           renderIndicator={currentIndex => (
             <View style={styles.indicator}>
-              <TouchableOpacity style={{ marginTop:40 }} onPress={handleCloseModal}>
+              <TouchableOpacity style={{ marginTop: 40 }} onPress={handleCloseModal}>
                 <Icon name="arrowleft" type="antdesign" size={22} color="white" />
               </TouchableOpacity>
               {imageProps.userName && (
                 <Text style={styles.text}>{imageProps.userName}</Text>
               )}
-              <TouchableOpacity style={{ marginTop:40 }}
+              <TouchableOpacity style={{ marginTop: 40 }}
                 onPress={() =>
                   checkPermissionDownloadFile(imageProps.content[currentIndex - 1].url)
                 }>
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  text: { color: '#fff', fontSize: 18, marginLeft: 15,marginTop:40 },
+  text: { color: '#fff', fontSize: 18, marginLeft: 15, marginTop: 40 },
   video: {
     width: '100%',
     height: '100%',

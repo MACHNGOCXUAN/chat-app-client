@@ -22,10 +22,10 @@ const handleSendImage = async (file, uploadFile, isCoverImage) => {
   // Expo đã trả về base64 nếu yêu cầu
   const fileBase64 = file.base64 || '';
 
-  const body = { 
-    fileName, 
-    fileExtension: `.${fileExtension}`, 
-    fileBase64 
+  const body = {
+    fileName,
+    fileExtension: `.${fileExtension}`,
+    fileBase64
   };
 
   try {
@@ -44,11 +44,11 @@ export const updateAvatar = async (email, urlUpdateName) => {
       mediaTypes: 'images', // Thay bằng string đơn giản
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 1,
+      quality: 0.7, // Reduced from 1 to 0.7 to keep file size smaller
     });
 
     const nameImage = urlUpdateName == "updateAvatar" ? "avatarURL" : "coverImage"
-    
+
 
     // 2. Hoặc nếu muốn dùng enum (kiểm tra import trước)
     // let result = await ImagePicker.launchImageLibraryAsync({
@@ -60,7 +60,7 @@ export const updateAvatar = async (email, urlUpdateName) => {
 
     if (!result.canceled && result.assets && result.assets[0]) {
       const uri = result.assets[0].uri;
-      
+
       // Xử lý tên file và type linh hoạt hơn
       const fileName = uri.split('/').pop() || 'avatar.jpg';
       const fileType = uri.split('.').pop() || 'jpg';
@@ -94,7 +94,7 @@ export const updateAvatar = async (email, urlUpdateName) => {
 // export const showImagePicker = async (email) => {
 //   try {
 //     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
+
 //     if (status !== 'granted') {
 //       commonFuc.notifyMessage('Cần cấp quyền', 'Ứng dụng cần quyền truy cập thư viện ảnh');
 //       return;
@@ -145,7 +145,7 @@ export const openCamera = async (uploadFile, isCoverImage, email, urlUpdateName)
   try {
     // Yêu cầu quyền truy cập camera
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    
+
     if (status !== 'granted') {
       commonFuc.notifyMessage('Cần cấp quyền', 'Ứng dụng cần quyền truy cập camera');
       return;
@@ -153,14 +153,13 @@ export const openCamera = async (uploadFile, isCoverImage, email, urlUpdateName)
 
     const nameImage = urlUpdateName == "updateAvatar" ? "avatarURL" : "coverImage"
 
-    
+
 
     let result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 0.8,
-      base64: true,
+      quality: 0.7,
     });
 
     if (!result.canceled) {

@@ -3,20 +3,20 @@ import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import CustomModal from './CustomModal';
-import commonFuc,{ openCamera, updateAvatar } from '../utils/commonFuc';
+import commonFuc, { openCamera, updateAvatar } from '../utils/commonFuc';
 import { useSelector } from 'react-redux';
 
 const AvatarModal = ({
   modalVisible = false,
-  setModalVisible = () => {},
+  setModalVisible = () => { },
   isCoverImage = false,
-  onViewImage = () => {},
-  onUploadFile = () => {},
+  onViewImage = () => { },
+  onUploadFile = () => { },
 }) => {
   const handleCloseModal = () => {
     setModalVisible(false);
   };
-  
+
 
   const handleOnSubmit = async values => {
     const { password } = values;
@@ -28,6 +28,7 @@ const AvatarModal = ({
     onViewImage(isCoverImage);
     handleCloseModal();
   };
+
 
   const { user } = useSelector(state => state.auth)
 
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
     borderBottomStartRadius: BUTTON_RADIUS,
     borderBottomEndRadius: BUTTON_RADIUS,
   },
-  
+
 });
 
 export default AvatarModal;

@@ -1,14 +1,32 @@
-import React, { useState } from "react";
-import { View, TextInput, TouchableOpacity, StatusBar, StyleSheet, Platform } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, TextInput, TouchableOpacity, StatusBar, StyleSheet, Platform, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
-const Header = ({ title }) => {
-  const [isFocus, setIsFocus] = useState(false);
+const Header = ({ title, setIsFocus, isFocus, onSearch  }) => {
+  // const [isFocus, setIsFocus] = useState(false);
   const [text, setText] = useState("");
 
   const isIOS = Platform.OS === "ios";
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (text.trim() !== "" && isFocus) {
+        onSearch(text);
+      } else {
+        onSearch(""); // Reset kết quả tìm kiếm khi text rỗng
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [text]);
+
+  const handleBackPress = () => {
+    setIsFocus(false);
+    setText("");
+    onSearch(""); // Reset kết quả tìm kiếm khi đóng tìm kiếm
+  };
 
   return (
     <SafeAreaView edges={["top"]} className='bg-[#297EFF]'>
@@ -19,10 +37,7 @@ const Header = ({ title }) => {
       <View className={`flex-row items-center px-5 gap-5 ${isIOS?"py-3":'py-3'}`}>
         {isFocus ? (
           <TouchableOpacity
-            onPress={() => {
-              setIsFocus(false);
-              setText("");
-            }}
+            onPress={handleBackPress}
           >
             <Ionicons name="chevron-back-outline" size={25} color="#fff" />
           </TouchableOpacity>

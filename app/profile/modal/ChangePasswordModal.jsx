@@ -1,26 +1,53 @@
 import { Formik } from 'formik';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
   TextInput,
   View,
+  Alert,
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { changePasswordValid } from '../utils/validation';
 import CustomModal from './CustomModal';
+import axiosInstance from '../../../utils/axiosInstance';
+import { useSelector } from 'react-redux';
+import Spinner from 'react-native-loading-spinner-overlay';
 
-const ChangePasswordModal = ({ modalVisible = false, setModalVisible = () => {} }) => {
+const ChangePasswordModal = ({ modalVisible = false, setModalVisible = () => { } }) => {
+  const [loading, setLoading] = useState(false);
+  const { user } = useSelector(state => state.auth);
+
   const handleCloseModal = () => {
     setModalVisible(false);
   };
 
   const handleChangePassword = async (values) => {
     const { oldPassword, newPassword } = values;
-    // Xử lý đổi mật khẩu
-    console.log('Change password: ', { oldPassword, newPassword });
-    handleCloseModal();
+
+    try {
+      setLoading(true);
+
+      const response = await axiosInstance.put('/updatePassword', {
+        email: user.email,
+        password: oldPassword,
+        newPassword: newPassword
+      });
+
+      if (response.data.success) {
+        Alert.alert('Thành công', 'Mật khẩu đã được cập nhật thành công!');
+        handleCloseModal();
+      }
+    } catch (error) {
+      console.error('Change password error:', error);
+      Alert.alert(
+        'Lỗi',
+        error.error || 'Không thể thay đổi mật khẩu. Vui lòng thử lại sau.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,6 +56,7 @@ const ChangePasswordModal = ({ modalVisible = false, setModalVisible = () => {} 
       onCloseModal={handleCloseModal}
       title="Đổi mật khẩu"
     >
+      <Spinner visible={loading} textContent="Đang xử lý..." />
       <Formik
         initialValues={changePasswordValid.initial}
         validationSchema={changePasswordValid.validationSchema}
