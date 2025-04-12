@@ -8,7 +8,7 @@ import axiosInstance from '../../utils/axiosInstance';
 import { Ionicons } from '@expo/vector-icons';
 
 
-
+const isIOS = Platform.OS === "ios";
 const RegisterScreen = () => {
   const [step, setStep] = useState(1);
   const [phone, setPhone] = useState('');
@@ -251,7 +251,7 @@ const RegisterScreen = () => {
         <View style={styles.stepContainer}>
           <Text style={styles.stepTitle}>Nhập mã xác thực</Text>
           <Text style={{ textAlign: "center", color: appColors.placeholderTextColor }}>Nhập dãy 6 chữ số được gửi đến số điện thoại</Text>
-          <Text style = {{ textAlign: "center", marginTop: 5, fontWeight: 'bold', marginBottom: 20 }}>{phone}</Text>
+          <Text style = {{ textAlign: "center", marginTop: 5, fontWeight: 'bold', marginBottom: 20 }}>{email}</Text>
 
           
           <TextInput
@@ -485,11 +485,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,
-    padding: 15,
+    padding: isIOS ? 15 : 7,
     marginBottom: 15,
     fontSize: 16,
     flexDirection: "row",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
+    alignItems: 'center'
   },
   dateInput: {
     height: 50,
