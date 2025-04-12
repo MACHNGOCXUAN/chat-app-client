@@ -1,12 +1,14 @@
 import { router } from 'expo-router'
 import React, { useState } from 'react'
-import { View, Text, TextInput, TouchableHighlight, StyleSheet, ActivityIndicator, Keyboard, TouchableOpacity } from 'react-native'
+import { View, Text, TextInput, TouchableHighlight, StyleSheet, ActivityIndicator, Keyboard, TouchableOpacity, Platform } from 'react-native'
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import axiosInstance from '../../utils/axiosInstance'
 import { useDispatch } from 'react-redux'
 import { addAuth } from '../../stores/reducers/authReducer'
 import { appColors } from '../../constants/appColor'
 import { Ionicons } from '@expo/vector-icons'
+
+const isIOS = Platform.OS === "ios";
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('')
@@ -170,11 +172,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,
-    padding: 15,
+    padding: isIOS ? 15 : 7,
     marginBottom: 15,
     fontSize: 16,
     flexDirection: "row",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
+    alignItems: 'center'
   },
   loginButton: {
     backgroundColor: appColors.primary,
