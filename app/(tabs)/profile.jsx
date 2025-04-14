@@ -380,7 +380,9 @@ export default function MeScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#E2E9F1',
+    // backgroundColor: '#E2E9F1',
+    backgroundColor: "#fff",
+    flex:1
   },
   header: {},
   action: {

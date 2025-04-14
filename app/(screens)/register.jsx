@@ -67,7 +67,7 @@ const RegisterScreen = () => {
     setLoading(true)
     try {
 
-      const checkResponse = await axiosInstance.post("/checkPhoneAndEmail", {
+      const checkResponse = await axiosInstance.post("/api/auth/checkPhoneAndEmail", {
         phoneNumber: phone,
         email: email
       });
@@ -77,7 +77,7 @@ const RegisterScreen = () => {
         return;
       }
 
-      const response = await axiosInstance.post("/verify", {
+      const response = await axiosInstance.post("/api/auth/verify", {
         email
       })
       setCode(response.data.data.code)
@@ -275,6 +275,7 @@ const RegisterScreen = () => {
           <TouchableOpacity 
             style={styles.resendButton}
             disabled={countdown > 0}
+            onPress={handleSendOtp}
           >
             <Text style={[styles.resendText, countdown > 0 && { color: '#ccc' }]}>
               {countdown > 0 ? `Gửi lại sau ${countdown}s` : 'Gửi lại mã OTP'}

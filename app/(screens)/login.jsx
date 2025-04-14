@@ -52,7 +52,7 @@ const LoginScreen = () => {
     setLoading(true)
     
     try {
-      const res = await axiosInstance.post("/login", {
+      const res = await axiosInstance.post("/api/auth/login", {
         email,
         password
       })

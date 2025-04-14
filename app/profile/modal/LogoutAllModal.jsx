@@ -35,7 +35,7 @@ const LogoutAllModal = ({ modalVisible = false, setModalVisible = null }) => {
     try {
       setLoading(true);
 
-      const response = await axiosInstance.post('/logout', {
+      const response = await axiosInstance.post('/api/auth/logout', {
         email: user.email,
         password: password
       });
