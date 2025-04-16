@@ -49,7 +49,7 @@ const forgotPassword = () => {
     setLoading(true)
     try {
 
-      const checkResponse = await axiosInstance.post("/checkEmail", {
+      const checkResponse = await axiosInstance.post("/api/auth/checkEmail", {
         email: email
       });
 
@@ -61,7 +61,7 @@ const forgotPassword = () => {
         return;
       }
 
-      const response = await axiosInstance.post("/verify", {
+      const response = await axiosInstance.post("/api/auth/verify", {
         email
       })
 
@@ -104,7 +104,7 @@ const forgotPassword = () => {
 
     setLoading(true)
     try {
-      const updatePassword = await axiosInstance.put("/forgotPasswrod", {
+      const updatePassword = await axiosInstance.put("/api/auth/forgotPasswrod", {
         email: email,
         password
       })

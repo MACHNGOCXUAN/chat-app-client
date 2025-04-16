@@ -11,16 +11,25 @@ const Header = ({ title, setIsFocus, isFocus, onSearch  }) => {
   const isIOS = Platform.OS === "ios";
 
   useEffect(() => {
+    const isPhoneNumber = /^\d{10}$/.test(text);
+  
+    if (isPhoneNumber && isFocus) {
+      onSearch(text);
+      return;
+    }
+  
     const timer = setTimeout(() => {
       if (text.trim() !== "" && isFocus) {
         onSearch(text);
       } else {
-        onSearch(""); // Reset kết quả tìm kiếm khi text rỗng
+        onSearch("");
       }
-    }, 500);
-
+    }, 300);
+  
     return () => clearTimeout(timer);
-  }, [text]);
+  }, [text, isFocus]);
+  
+  
 
   const handleBackPress = () => {
     setIsFocus(false);

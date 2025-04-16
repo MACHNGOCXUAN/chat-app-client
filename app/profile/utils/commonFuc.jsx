@@ -66,7 +66,7 @@ const handleSendImage = async (file, uploadFile, isCoverImage) => {
 //       });
 //       formData.append('email', email);
 
-//       const response = await axiosInstance.put(`/${urlUpdateName}`, formData, {
+//       const response = await axiosInstance.put(`/api/auth/${urlUpdateName}`, formData, {
 //         headers: {
 //           'Content-Type': 'multipart/form-data',
 //         },
@@ -114,7 +114,7 @@ export const updateAvatar = createAsyncThunk(
         });
         formData.append('email', email);
   
-        const response = await axiosInstance.put(`/${urlUpdateName}`, formData, {
+        const response = await axiosInstance.put(`/api/auth/${urlUpdateName}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
@@ -170,7 +170,7 @@ export const openCamera = createAsyncThunk(
         });
         formData.append('email', email);
   
-        const response = await axiosInstance.put(`/${urlUpdateName}`, formData, {
+        const response = await axiosInstance.put(`/api/auth/${urlUpdateName}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
@@ -226,7 +226,7 @@ export const openCamera = createAsyncThunk(
 //       });
 //       formData.append('email', email);
 
-//       const response = await axiosInstance.put(`/${urlUpdateName}`, formData, {
+//       const response = await axiosInstance.put(`/api/auth/${urlUpdateName}`, formData, {
 //         headers: {
 //           'Content-Type': 'multipart/form-data',
 //         },

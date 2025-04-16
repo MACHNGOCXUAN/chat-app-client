@@ -29,7 +29,7 @@ const ChangePasswordModal = ({ modalVisible = false, setModalVisible = () => { }
     try {
       setLoading(true);
 
-      const response = await axiosInstance.put('/updatePassword', {
+      const response = await axiosInstance.put('/api/auth/updatePassword', {
         email: user.email,
         password: oldPassword,
         newPassword: newPassword
