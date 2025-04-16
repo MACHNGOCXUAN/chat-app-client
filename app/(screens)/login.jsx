@@ -23,24 +23,15 @@ const LoginScreen = () => {
       setErrMessage('Vui lòng nhập số điện thoại');
       return false
     }
-    
-    // if (!/^\d+$/.test(phone)) {
-    //   setErrMessage('Số điện thoại chỉ được chứa số');
-    //   return false
-    // }
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
     if (!emailRegex.test(email)) {
       setErrMessage("Email không hợp lệ");
       return;
     }
-    
     if (!password.trim()) {
       setErrMessage('Vui lòng nhập mật khẩu');
       return false
     }
-    
     return true
   }
 
@@ -56,12 +47,12 @@ const LoginScreen = () => {
         email,
         password
       })
-
       dispatch(addAuth(res.data.data));
       await AsyncStorage.setItem(
         "auth",
         JSON.stringify(res.data.data)
       );
+
       router.replace('/(tabs)')
     } catch (error) {
       console.log('Login error:', error);

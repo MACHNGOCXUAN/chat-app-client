@@ -68,8 +68,6 @@ const Group = () => {
   )
 }
 
-export default Group
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -106,3 +104,5 @@ const styles = StyleSheet.create({
     color: "gray",
   },
 });
+
+export default Group

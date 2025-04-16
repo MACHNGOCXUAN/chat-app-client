@@ -4,6 +4,8 @@ import slider1 from '../assets/images/slider1.png';
 import slider2 from '../assets/images/slider2.png';
 import { router } from 'expo-router';
 import { appColors } from '../constants/appColor';
+import socket from '../utils/socket'
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 const WelcomeScreen = () => {
   const screenWidth = Dimensions.get("window").width;
@@ -25,6 +27,43 @@ const WelcomeScreen = () => {
       description: "Nơi cùng nhau trao đổi, giữ liên lạc với gia đình bạn bè, đồng nghiệp..."
     }
   ];
+
+  useEffect(() => {
+    socket.on('connect', () => {
+      console.log('Connected to server');
+    });
+
+    return () => {
+      socket.off('connect');
+      socket.off('message');
+      socket.disconnect();
+    };
+
+    socket.on('message', (data) => {
+      setMessages(prev => [...prev, data]);
+    });
+
+    return () => {
+      socket.off('connect');
+      socket.off('message');
+      socket.disconnect();
+    };
+  }, [])
+
+
+  // useEffect(() => {
+  //   const checkAuth = async () => {
+  //     try {
+  //       const storedAuth = await AsyncStorage.getItem("auth");
+  //       if (storedAuth) {
+  //         router.replace("/(tabs)");
+  //       }
+  //     } catch (error) {
+  //       console.log("Error checking auth:", error);
+  //     }
+  //   };
+  //   checkAuth();
+  // }, []);
 
   // Hàm scroll đến index với xử lý lỗi
   const scrollToIndex = useCallback((index) => {

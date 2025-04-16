@@ -5,6 +5,8 @@ import * as ImagePicker from 'expo-image-picker';
 import avatar from '../../assets/images/avatar.png'
 import { useRoute } from '@react-navigation/native';
 import Header from '../../components/Header';
+import socket from '../../utils/socket';
+
 
 const message = () => {
 
@@ -115,6 +117,13 @@ const message = () => {
     }, [selectedContacts]);
   
     const inputRef = useRef(null);
+
+
+    useEffect(() => {
+      socket.on('connect', () => {
+        console.log('Connected to server');
+      })
+    }, []);
 
   return (
     <View className='flex-1 relative'>
