@@ -63,7 +63,6 @@ const Header = ({ title, setIsFocus, isFocus, onSearch  }) => {
           textAlignVertical="center"
           className = {`flex-1 py-2 px-4 text-[18px] rounded-[10px] ${isFocus?"bg-white":"bg-transparent"}`}
           onFocus={() => setIsFocus(true)}
-          onBlur={() => setIsFocus(false)}
           value={text}
           onChangeText={(newText) => setText(newText)}
         />
