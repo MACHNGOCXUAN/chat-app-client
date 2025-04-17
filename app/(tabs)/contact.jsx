@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Platform, TouchableOpacity, FlatList, Image, Alert } from "react-native";
 import Header from "../../components/Header";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
@@ -8,6 +8,8 @@ import avatar from '../../assets/images/avatar.png';
 import { Ionicons } from "@expo/vector-icons";
 import axiosInstance from "../../utils/axiosInstance";
 import { useSelector } from "react-redux";
+import socket from '../../utils/socket'
+import Toast from 'react-native-toast-message'
 
 
 const Tab = createMaterialTopTabNavigator();
@@ -98,6 +100,55 @@ const Contacts = () => {
     // ]);
   };
 
+  const addFriend = async (receiverPhone) => {
+    const senderPhone = user.phoneNumber;
+    console.log("xian");
+    
+    try {
+      const res = await axiosInstance.post("/api/friend/request", {
+        senderPhone, 
+        receiverPhone
+      });
+  
+      if(res.data && !res.data.success) {
+        Alert.alert("❌ Lỗi", res.data.message || "Không gửi được lời mời kết bạn.");
+        return;
+      }
+      Alert.alert("✅ Thành công", res.data?.message || "Đã gửi lời mời kết bạn.");
+    } catch (error) {
+      Alert.alert("❌ Lỗi", "Không gửi được lời mời.");
+      console.error(error);
+    }
+  }
+
+  const showToast = (data) => {
+    Toast.show({
+      type: "success",
+      text1: "📬 Lời mời kết bạn",
+      text2: `${data.username} muốn kết bạn với bạn`,
+      visibilityTime: 3000,
+      props: {
+        avatar: data.avatarURL || defaultAvatar
+      }
+    })
+    
+  }
+
+  useEffect(() => {
+    if (user?._id) {
+      socket.emit("joinUserRoom", user._id);
+      
+      socket.on("friendRequestReceived", (data) => {
+        // Alert.alert("📬 Lời mời kết bạn", `${data.username} muốn kết bạn với bạn`);
+        showToast(data)
+      });
+  
+      return () => {
+        socket.off("friendRequestReceived");
+      };
+    }
+  }, [user?._id]);
+
   const renderSearchItem = ({ item }) => {
     if(item.type == "friend") {
       return (
@@ -117,7 +168,7 @@ const Contacts = () => {
                 <Ionicons name="call-outline" size={25}/>
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => addFriend(item.phoneNumber)}>
                 <Ionicons name="person-add-outline" size={25}/>
               </TouchableOpacity>
             )}

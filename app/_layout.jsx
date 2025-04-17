@@ -8,6 +8,7 @@ import { Text, View } from "react-native";
 import { Provider } from 'react-redux'
 import { store } from "../stores/store";
 import { appColors } from '../constants/appColor'
+import Toast from "react-native-toast-message";
 
 export default function RootLayout() {
   const [memberCount, setMemberCount] = useState(0);
@@ -91,7 +92,23 @@ export default function RootLayout() {
             )
           })}
         />
+
+        <Stack.Screen
+          name="(contact)/NewFriend"
+          options={({ navigation }) => ({
+            title: "",
+            headerShown: true,
+            headerStyle: { backgroundColor: appColors.primary },
+            headerLeft: () => (
+              <View style={{ flexDirection: 'row', gap: 20, alignItems: 'center' }}>
+                <MaterialIcons color={appColors.white} onPress={() => navigation.goBack()} name="west" size={25}/>
+                <Text style={{ fontWeight: '600', fontSize: 18, color: appColors.white }}>Lời mời kết bạn</Text>
+              </View>
+            )
+          })}
+        />
       </Stack>
+      <Toast/>
     </Provider>
   );
 }

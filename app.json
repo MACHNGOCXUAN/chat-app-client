@@ -37,7 +37,7 @@
       "favicon": "./assets/images/logo.png"
     },
     "plugins": [
-      "expo-router",
+      "expo-router", 
       [
         "expo-splash-screen",
         {

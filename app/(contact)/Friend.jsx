@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -12,8 +12,15 @@ import {
 } from "react-native";
 import { FontAwesome6, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import avatar from '../../assets/images/avatar.png';
+import { router } from "expo-router";
+import axios from "axios";
+import axiosInstance from "../../utils/axiosInstance";
+import { useSelector } from "react-redux";
 
 const Friend = () => {
+
+  const {accessToken, user} = useSelector(state => state.auth)
+
   const features = [
     { id: "1", name: "Lời mời kết bạn (13)", icon: "user-group" },
     { id: "2", name: "Danh bạ máy", icon: "id-badge", description: "Liên hệ có dùng Zalo" },
@@ -31,6 +38,28 @@ const Friend = () => {
     { id: "108", name: "Đặng Văn E", avatar: avatar },
     { id: "109", name: "Đặng Văn E", avatar: avatar },
   ]);
+
+  useEffect(() => {
+    
+    const fetchRequests = async () => {
+      try {
+        const response = await axiosInstance.get('/api/friend/friends', {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        const accepted = response.data.acceptedFriends || [];
+        setFriends(accepted);
+      } catch (error) {
+        console.error('Lỗi khi lấy lời mời:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRequests();
+  }, []);
 
   const [active, setActive] = useState(0)
 
@@ -57,9 +86,9 @@ const Friend = () => {
     <TouchableOpacity style={{ flexDirection: "row", alignItems: 'center', padding: 15, justifyContent: 'space-between' }}>
       <View style={styles.friendItem}>
         <View style={styles.avatar}>
-          <Image source={item.avatar} style={styles.avatar} />
+          <Image source={{ uri: item.avatarURL }} style={styles.avatar} />
         </View>
-        <Text style={styles.friendName}>{item.name}</Text>
+        <Text style={styles.friendName}>{item.username}</Text>
       </View>
       <View style={{ flexDirection: "row", gap: 20 }}>
         <TouchableOpacity>
@@ -74,12 +103,37 @@ const Friend = () => {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-      <FlatList
-        data={features}
-        keyExtractor={(item) => item.id}
-        renderItem={renderFeature}
-        scrollEnabled={false}
-      />
+      <Pressable style={styles.item} onPress={() => router.push('/(contact)/NewFriend')}>
+        <View style={styles.itemContent}>
+          <View style={styles.itemImage}>
+            <FontAwesome6 name="user-group" size={18} color="#fff" />
+          </View>
+          <View>
+            <Text style={styles.itemName}>Lời mới kết bạn</Text>
+          </View>
+        </View>
+      </Pressable>
+      <Pressable style={styles.item}>
+        <View style={styles.itemContent}>
+          <View style={styles.itemImage}>
+            <FontAwesome6 name="id-badge" size={18} color="#fff" />
+          </View>
+          <View>
+            <Text style={styles.itemName}>Danh bạ máy</Text>
+            <Text style={styles.itemDescription}>Liên hệ có dùng zalo</Text>
+          </View>
+        </View>
+      </Pressable>
+      <Pressable style={styles.item}>
+        <View style={styles.itemContent}>
+          <View style={styles.itemImage}>
+            <FontAwesome6 name="cake-candles" size={18} color="#fff" />
+          </View>
+          <View>
+            <Text style={styles.itemName}>Sinh nhật</Text>
+          </View>
+        </View>
+      </Pressable>
 
       <View style={{ padding: 5, backgroundColor: "#f0f0f0" }}></View>
 
