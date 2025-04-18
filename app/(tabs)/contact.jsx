@@ -10,6 +10,7 @@ import axiosInstance from "../../utils/axiosInstance";
 import { useSelector } from "react-redux";
 import socket from '../../utils/socket'
 import Toast from 'react-native-toast-message'
+import { router } from "expo-router";
 
 
 const Tab = createMaterialTopTabNavigator();
@@ -139,8 +140,8 @@ const Contacts = () => {
       socket.emit("joinUserRoom", user._id);
       
       socket.on("friendRequestReceived", (data) => {
-        // Alert.alert("📬 Lời mời kết bạn", `${data.username} muốn kết bạn với bạn`);
-        showToast(data)
+        Alert.alert("📬 Lời mời kết bạn", `${data.username} muốn kết bạn với bạn`);
+        // showToast(data)
       });
   
       return () => {
@@ -152,7 +153,7 @@ const Contacts = () => {
   const renderSearchItem = ({ item }) => {
     if(item.type == "friend") {
       return (
-        <TouchableOpacity style={{ flexDirection: "row", alignItems: 'center', padding: 15, justifyContent: 'space-between' }}>
+        <TouchableOpacity onPress={() => router.push("(main)/ChatScreen")}  style={{ flexDirection: "row", alignItems: 'center', padding: 15, justifyContent: 'space-between' }}>
           <View style={styles.friendItem} className = "flex flex-row gap-5">
             <View >
               <Image source={item.avatarURL ? { uri: item?.avatarURL } : avatar}  style={styles.avatar} />
