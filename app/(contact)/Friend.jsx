@@ -83,7 +83,7 @@ const Friend = () => {
   );
 
   const renderFriend = ({ item }) => (
-    <TouchableOpacity style={{ flexDirection: "row", alignItems: 'center', padding: 15, justifyContent: 'space-between' }}>
+    <TouchableOpacity onPress={() => router.push("(main)/ChatScreen")} style={{ flexDirection: "row", alignItems: 'center', padding: 15, justifyContent: 'space-between' }}>
       <View style={styles.friendItem}>
         <View style={styles.avatar}>
           <Image source={{ uri: item.avatarURL }} style={styles.avatar} />

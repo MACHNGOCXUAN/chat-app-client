@@ -1,5 +1,5 @@
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import "react-native-reanimated";
 import "./global.css";
@@ -12,6 +12,8 @@ import Toast from "react-native-toast-message";
 import ChatScreen from "./(main)/ChatScreen";
 
 export default function RootLayout() {
+  
+  // const otherUser = params.otherUser ? JSON.parse(params.otherUser) : null;
   const [memberCount, setMemberCount] = useState(0);
   return (
     <Provider store={store}>
@@ -212,7 +214,7 @@ export default function RootLayout() {
                     color: appColors.white,
                   }}
                 >
-                  Lời mời kết bạn
+                  xuan
                 </Text>
               </View>
             ),

@@ -1,58 +1,52 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet, Platform, Keyboard } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons'; // Hoặc sử dụng @expo/vector-icons nếu dùng Expo
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
-export class InputSend extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      message: '',
-    };
-  }
+const InputSend = ({ onSend }) => {
+  const [message, setMessage] = useState('');
 
-  handleSend = () => {
-    if (this.state.message.trim()) {
-      this.props.onSend(this.state.message);
-      this.setState({ message: '' });
+  const handleSend = () => {
+    
+    if (message.trim()) {
+      onSend(message);
+      setMessage('');
       Keyboard.dismiss();
     }
   };
 
-  render() {
-    return (
-      <View style={styles.container}>
-        <TouchableOpacity style={styles.iconButton}>
-          <Icon name="insert-emoticon" size={24} color="#666" />
-        </TouchableOpacity>
-        
-        <TextInput
-          style={styles.input}
-          value={this.state.message}
-          onChangeText={(text) => this.setState({ message: text })}
-          placeholder="Nhập tin nhắn..."
-          placeholderTextColor="#999"
-          multiline
-        />
+  return (
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.iconButton}>
+        <Icon name="insert-emoticon" size={24} color="#666" />
+      </TouchableOpacity>
+      
+      <TextInput
+        style={styles.input}
+        value={message}
+        onChangeText={setMessage}
+        placeholder="Nhập tin nhắn..."
+        placeholderTextColor="#999"
+        multiline
+      />
 
-        <TouchableOpacity style={styles.iconButton}>
-          <Icon name="attach-file" size={24} color="#666" />
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.sendButton} 
-          onPress={this.handleSend}
-          disabled={!this.state.message.trim()}
-        >
-          <Icon 
-            name={this.state.message.trim() ? "send" : "mic"} 
-            size={24} 
-            color={this.state.message.trim() ? "#2e86de" : "#666"} 
-          />
-        </TouchableOpacity>
-      </View>
-    );
-  }
-}
+      <TouchableOpacity style={styles.iconButton}>
+        <Icon name="attach-file" size={24} color="#666" />
+      </TouchableOpacity>
+      
+      <TouchableOpacity 
+        style={styles.sendButton} 
+        onPress={handleSend}
+        disabled={!message.trim()}
+      >
+        <Icon 
+          name={message.trim() ? "send" : "mic"} 
+          size={24} 
+          color={message.trim() ? "#2e86de" : "#666"} 
+        />
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {

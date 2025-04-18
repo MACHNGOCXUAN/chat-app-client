@@ -1,118 +1,68 @@
-import React from 'react';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
+import { useSelector } from 'react-redux';
+import axiosInstance from '../utils/axiosInstance';
+import { useLocalSearchParams } from 'expo-router';
+import socket from '../utils/socket';
 
-const data = [
-  {
-      "_id": "67ff00a40bf9449e80c6c72a",
-      "conversationId": "67fe91d5bd1978d2ec096a0e",
-      "senderId": {
-          "_id": "67f9af04c8c9359e9b857742",
-          "username": "Mạch ngoc xuân",
-          "avatarURL": "https://cong-nghe-moi.s3.ap-southeast-1.amazonaws.com/zhxv-1744424605742-Screenshot%202025-03-01%20120757.png"
-      },
-      "messageType": "text",
-      "content": "Tin nhắn đã được thu hồi",
-      "edited": true,
-      "is_last_message": true,
-      "timestamp": "2025-04-16T00:58:12.559Z",
-      "createdAt": "2025-04-16T00:58:12.561Z",
-      "updatedAt": "2025-04-16T06:31:16.964Z",
-      "__v": 0
-  },
-  {
-      "_id": "67ff0143fc18dc111551a040",
-      "conversationId": "67fe91d5bd1978d2ec096a0e",
-      "senderId": {
-          "_id": "67f9af04c8c9359e9b857742",
-          "username": "Mạch ngoc xuân",
-          "avatarURL": "https://cong-nghe-moi.s3.ap-southeast-1.amazonaws.com/zhxv-1744424605742-Screenshot%202025-03-01%20120757.png"
-      },
-      "messageType": "text",
-      "content": "Xin Chao",
-      "edited": false,
-      "is_last_message": true,
-      "timestamp": "2025-04-16T01:00:51.266Z",
-      "createdAt": "2025-04-16T01:00:51.269Z",
-      "updatedAt": "2025-04-16T01:00:51.269Z",
-      "__v": 0
-  },
-  {
-      "_id": "67ff24fe4ec530e92b81329c",
-      "conversationId": "67fe91d5bd1978d2ec096a0e",
-      "senderId": {
-          "_id": "67f3e4bef883317e9babe079",
-          "username": "0976166842",
-          "avatarURL": "https://internetviettel.vn/wp-content/uploads/2017/05/H%C3%ACnh-%E1%BA%A3nh-minh-h%E1%BB%8Da.jpg"
-      },
-      "messageType": "text",
-      "content": "hello",
-      "edited": false,
-      "is_last_message": true,
-      "timestamp": "2025-04-16T03:33:18.022Z",
-      "createdAt": "2025-04-16T03:33:18.025Z",
-      "updatedAt": "2025-04-16T03:33:18.025Z",
-      "__v": 0
-  },
-  {
-    "_id": "67ff24fe4ec530e92b81329c",
-    "conversationId": "67fe91d5bd1978d2ec096a0e",
-    "senderId": {
-        "_id": "67f3e4bef883317e9babe079",
-        "username": "0976166842",
-        "avatarURL": "https://internetviettel.vn/wp-content/uploads/2017/05/H%C3%ACnh-%E1%BA%A3nh-minh-h%E1%BB%8Da.jpg"
-    },
-    "messageType": "text",
-    "content": "hello",
-    "edited": false,
-    "is_last_message": true,
-    "timestamp": "2025-04-16T03:33:18.022Z",
-    "createdAt": "2025-04-16T03:33:18.025Z",
-    "updatedAt": "2025-04-16T03:33:18.025Z",
-    "__v": 0
-},
-{
-  "_id": "67ff00a40bf9449e80c6c729a",
-  "conversationId": "67fe91d5bd1978d2ec096a0e",
-  "senderId": {
-      "_id": "67f9af04c8c9359e9b857742",
-      "username": "Mạch ngoc xuân",
-      "avatarURL": "https://cong-nghe-moi.s3.ap-southeast-1.amazonaws.com/zhxv-1744424605742-Screenshot%202025-03-01%20120757.png"
-  },
-  "messageType": "text",
-  "content": "Tin nhắn đã được thu hồi",
-  "edited": true,
-  "is_last_message": true,
-  "timestamp": "2025-04-16T00:58:12.559Z",
-  "createdAt": "2025-04-16T00:58:12.561Z",
-  "updatedAt": "2025-04-16T06:31:16.964Z",
-  "__v": 0
-},
-{
-  "_id": "67ff00a40bf9449e80c6c72a",
-  "conversationId": "67fe91d5bd1978d2ec096a0e",
-  "senderId": {
-      "_id": "67f9af04c8c9359e9b857742",
-      "username": "Mạch ngoc xuân",
-      "avatarURL": "https://cong-nghe-moi.s3.ap-southeast-1.amazonaws.com/zhxv-1744424605742-Screenshot%202025-03-01%20120757.png"
-  },
-  "messageType": "text",
-  "content": "Tin nhắn đã được thu hồi",
-  "edited": true,
-  "is_last_message": true,
-  "timestamp": "2025-04-16T00:58:12.559Z",
-  "createdAt": "2025-04-16T00:58:12.561Z",
-  "updatedAt": "2025-04-16T06:31:16.964Z",
-  "__v": 0
-},
-  // ... rest of your messages
-];
+const MessageSection = ({conversationId, messages, setMessages}) => {
 
-const currentUserId = "67f9af04c8c9359e9b857742";
+  const params = useLocalSearchParams();
+    // const conversationId = params.conversationId;
+    // const otherUser = params.otherUser ? JSON.parse(params.otherUser) : null;
+    const [loading, setLoading] = useState(true);
 
-const MessageSection = () => {
+  const {user} = useSelector((state) => state.auth)
+  // const [messages, setMessages] = useState([])
+
+  const currentUserId = user._id
+
+  
+
+  useEffect(() => {
+    const fetchMessageConversation = async () => {
+      try {
+        const response = await axiosInstance.get(`/api/message/${conversationId}`);
+        if (response.data.success) {
+          setMessages(response.data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch messages:", error);
+      }
+    };
+
+    if (conversationId) {
+      fetchMessageConversation();
+    }
+  }, [conversationId]);
+
+
+  useEffect(() => {
+    const handleNewMessage = (newMessage) => {
+      if (newMessage.conversationId === conversationId) {
+        // Kiểm tra xem đã có tin nhắn này chưa (dựa vào _id)
+        setMessages(prev => {
+          const exists = prev.some(msg => msg._id === newMessage._id);
+          if (!exists) return [...prev, newMessage];
+          return prev;
+        });
+      }
+    };
+  
+    socket.on('message_sent', handleNewMessage);
+    socket.on('receive_message', handleNewMessage);
+  
+    return () => {
+      socket.off('message_sent', handleNewMessage);
+      socket.off('receive_message', handleNewMessage);
+    };
+  }, [conversationId]);
+  
+  
   return (
     <View style={styles.container}>
-      {data.map((message) => {
+      {messages.map((message) => {
         const isSentByMe = message.senderId._id === currentUserId;
         
         return (

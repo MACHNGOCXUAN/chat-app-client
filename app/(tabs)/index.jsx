@@ -44,49 +44,6 @@ const message = ({ navigation }) => {
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState([]);
 
-  const Messages = [
-    {
-      id: "1",
-      userName: "Jenny Doe",
-      userImg: require("../../assets/users/user-3.jpg"),
-      messageTime: "4 mins ago",
-      messageText:
-        "Hey there, this is my test for a post of my social app in React Native.",
-    },
-    {
-      id: "2",
-      userName: "John Doe",
-      userImg: require("../../assets/users/user-1.jpg"),
-      messageTime: "2 hours ago",
-      messageText:
-        "Hey there, this is my test for a post of my social app in React Native.",
-    },
-    {
-      id: "3",
-      userName: "Ken William",
-      userImg: require("../../assets/users/user-4.jpg"),
-      messageTime: "1 hours ago",
-      messageText:
-        "Hey there, this is my test for a post of my social app in React Native.",
-    },
-    {
-      id: "4",
-      userName: "Selina Paul",
-      userImg: require("../../assets/users/user-6.jpg"),
-      messageTime: "1 day ago",
-      messageText:
-        "Hey there, this is my test for a post of my social app in React Native.",
-    },
-    {
-      id: "5",
-      userName: "Christy Alex",
-      userImg: require("../../assets/users/user-7.jpg"),
-      messageTime: "2 days ago",
-      messageText:
-        "Hey there, this is my test for a post of my social app in React Native.",
-    },
-  ];
-
   const handleSearch = (text) => {
     setSearchText(text);
 
@@ -194,29 +151,51 @@ const message = ({ navigation }) => {
 
   const inputRef = useRef(null);
 
-  useEffect(() => {
-    const fetchConversation = async () => {
-      try {
-        const response = await axiosInstance.get("/api/conversation/conversation", {
-          headers: {
-            Authorization: `Bearer ${accessToken}`
-          }
-        });
-  
-        if (response.data.success) {
-          const accepted = response.data.data || [];
-          setConversation(accepted);
-          getOtherUser()
-        } else {
-          console.error("Request succeeded but API returned false:", response.data);
+
+  const fetchConversation = async () => {
+    try {
+      const response = await axiosInstance.get("/api/conversation/conversation", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
         }
-      } catch (error) {
-        console.error("Failed to fetch conversation:", error);
+      });
+
+      if (response.data.success) {
+        const accepted = response.data.data || [];
+        setConversation(accepted);
+        getOtherUser()
+      } else {
+        console.error("Request succeeded but API returned false:", response.data);
       }
-      
-    };
-  
+    } catch (error) {
+      console.error("Failed to fetch conversation:", error);
+    }
+  };
+
+
+
+  useEffect(() => {
     fetchConversation();
+
+    const handleConversationUpdate = (updatedConversation) => {
+      setConversation(prev => {
+        // Cập nhật conversation trong danh sách
+        const updated = prev.map(conv => 
+          conv._id === updatedConversation._id ? updatedConversation : conv
+        );
+        
+        // Sắp xếp lại theo thời gian cập nhật
+        return updated.sort((a, b) => 
+          new Date(b.updatedAt) - new Date(a.updatedAt)
+        );
+      });
+    };
+
+    socket.on('conversation_updated', handleConversationUpdate);
+
+    return () => {
+      socket.off('conversation_updated', handleConversationUpdate);
+    };
   }, [accessToken]);
 
   useEffect(() => {
@@ -226,17 +205,14 @@ const message = ({ navigation }) => {
   }, []);
 
   const getOtherUser = (conversationItem) => {
-    if (conversationItem.type !== 'private') return null;
+    if (conversationItem?.type !== 'private') return null;
     
     const otherUser = conversationItem.members.find(
       member => member._id !== user._id
     );
-
-    console.log(otherUser);
-    
-    
     return otherUser || conversationItem.members[0];
   };
+  
   
 
   return (
@@ -253,7 +229,13 @@ const message = ({ navigation }) => {
 
             return (
               <Card
-                onPress={() => router.push("/(main)/ChatScreen")}
+                onPress={() => router.push({
+                  pathname: "/(main)/ChatScreen",
+                  params: { 
+                    conversationId: item._id,
+                    otherUser: JSON.stringify(otherUser) // Truyền thông tin người dùng khác
+                  }
+                })}
               >
                 <UserInfo>
                   <UserImgWrapper>
