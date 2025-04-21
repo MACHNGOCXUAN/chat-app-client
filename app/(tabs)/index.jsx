@@ -136,8 +136,6 @@ const message = ({ navigation }) => {
       quality: 1,
     });
 
-    console.log(result);
-
     if (!result.canceled) {
       setSelectedImage(result.assets[0].uri);
     }
@@ -196,7 +194,7 @@ const message = ({ navigation }) => {
     return () => {
       socket.off('conversation_updated', handleConversationUpdate);
     };
-  }, [accessToken]);
+  }, []);
 
   useEffect(() => {
     socket.on("connect", () => {

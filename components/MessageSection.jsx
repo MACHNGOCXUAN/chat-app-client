@@ -1,29 +1,37 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
-import { useSelector } from 'react-redux';
-import axiosInstance from '../utils/axiosInstance';
-import { useLocalSearchParams } from 'expo-router';
-import socket from '../utils/socket';
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ActionSheetIOS,
+  Pressable,
+  Platform,
+  Alert,
+} from "react-native";
+import { useSelector } from "react-redux";
+import axiosInstance from "../utils/axiosInstance";
+import { useLocalSearchParams } from "expo-router";
+import socket from "../utils/socket";
 
-const MessageSection = ({conversationId, messages, setMessages}) => {
-
+const MessageSection = ({ conversationId, messages, setMessages }) => {
   const params = useLocalSearchParams();
-    // const conversationId = params.conversationId;
-    // const otherUser = params.otherUser ? JSON.parse(params.otherUser) : null;
-    const [loading, setLoading] = useState(true);
+  // const conversationId = params.conversationId;
+  // const otherUser = params.otherUser ? JSON.parse(params.otherUser) : null;
+  const [loading, setLoading] = useState(true);
 
-  const {user} = useSelector((state) => state.auth)
+  const { user } = useSelector((state) => state.auth);
   // const [messages, setMessages] = useState([])
 
-  const currentUserId = user._id
-
-  
+  const currentUserId = user._id;
 
   useEffect(() => {
-    const fetchMessageConversation = async () => {
+    const fetchMessageConversation = async (conversationId) => {
       try {
-        const response = await axiosInstance.get(`/api/message/${conversationId}`);
+        const response = await axiosInstance.get(
+          `/api/message/${conversationId}`
+        );
         if (response.data.success) {
           setMessages(response.data.data);
         }
@@ -33,53 +41,115 @@ const MessageSection = ({conversationId, messages, setMessages}) => {
     };
 
     if (conversationId) {
-      fetchMessageConversation();
+      
+      fetchMessageConversation(conversationId);
     }
   }, [conversationId]);
-
 
   useEffect(() => {
     const handleNewMessage = (newMessage) => {
       if (newMessage.conversationId === conversationId) {
         // Kiểm tra xem đã có tin nhắn này chưa (dựa vào _id)
-        setMessages(prev => {
-          const exists = prev.some(msg => msg._id === newMessage._id);
+        setMessages((prev) => {
+          const exists = prev.some((msg) => msg._id === newMessage._id);
           if (!exists) return [...prev, newMessage];
           return prev;
         });
       }
     };
-  
-    socket.on('message_sent', handleNewMessage);
-    socket.on('receive_message', handleNewMessage);
-  
+
+    const handleRecallMessageUpdate = (updatedMessage) => {
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg._id === updatedMessage._id ? updatedMessage : msg
+        )
+      );
+    };
+
+    socket.on("message_sent", handleNewMessage);
+    socket.on("receive_message", handleNewMessage);
+    socket.on("message_recalled", handleRecallMessageUpdate);
+
     return () => {
-      socket.off('message_sent', handleNewMessage);
-      socket.off('receive_message', handleNewMessage);
+      socket.off("message_sent", handleNewMessage);
+      socket.off("receive_message", handleNewMessage);
+      socket.off("message_recalled", handleRecallMessageUpdate);
     };
   }, [conversationId]);
-  
-  
+
+  const handleRecallMessage = (messageId) => {
+    socket.emit("recall_message", {
+      messageId,
+      conversationId,
+    });
+  };
+
+  const showMessageActions = (message) => {
+    const options = ["Chuyển tiếp"];
+    if (message.senderId._id === currentUserId) options.push("Thu hồi");
+    options.push("Hủy");
+    const cancelButtonIndex = options.length - 1;
+
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex,
+        },
+        (buttonIndex) => {
+          if (options[buttonIndex] === "Thu hồi") {
+            handleRecallMessage(message._id);
+          } else if (options[buttonIndex] === "Chuyển tiếp") {
+            // handleForwardMessage(message);
+            alert("Bạn chuyển tiếp tin nhắn!");
+          }
+        }
+      );
+    } else {
+      Alert.alert("Hành động", "Chọn thao tác", [
+        ...(message.senderId._id === currentUserId
+          ? [
+              {
+                text: "Thu hồi",
+                onPress: () => handleRecallMessage(message._id),
+              },
+            ]
+          : []),
+        {
+          text: "Chuyển tiếp",
+          onPress: () => alert("Bạn chuyển tiếp tin nhắn!"),
+        },
+        { text: "Hủy", style: "cancel" },
+      ]);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {messages.map((message) => {
         const isSentByMe = message.senderId._id === currentUserId;
-        
+
         return (
-          <View
+          <Pressable
+            onLongPress={() => showMessageActions(message)}
             key={message._id}
             style={[
               styles.messageContainer,
-              isSentByMe ? styles.sentMessage : styles.receivedMessage
+              isSentByMe ? styles.sentMessage : styles.receivedMessage,
             ]}
           >
             {!isSentByMe && (
               <View style={styles.avatarContainer}>
                 {message.senderId.avatarURL ? (
-                  <Image 
-                    source={{ uri: message.senderId.avatarURL }} 
+                  <Image
+                    source={{ uri: message.senderId.avatarURL }}
                     style={styles.avatar}
-                    onError={() => console.log("Error loading avatar for:", message.senderId.username)}
+                    onError={() =>
+                      console.log(
+                        "Error loading avatar for:",
+                        message.senderId.username
+                      )
+                    }
                   />
                 ) : (
                   <Text style={styles.avatarText}>
@@ -91,23 +161,38 @@ const MessageSection = ({conversationId, messages, setMessages}) => {
             <View
               style={[
                 styles.messageBubble,
-                isSentByMe ? styles.sentBubble : styles.receivedBubble
+                isSentByMe ? styles.sentBubble : styles.receivedBubble,
               ]}
             >
-              <Text style={[
-                styles.messageText,
-                isSentByMe && styles.sentMessageText
-              ]}>
-                {message.content}
-              </Text>
-              <Text style={[
-                styles.timestamp,
-                isSentByMe && styles.sentTimestamp
-              ]}>
-                {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {message.messageType === "text" ? (
+                <Text
+                  style={[
+                    styles.messageText,
+                    isSentByMe && styles.sentMessageText,
+                  ]}
+                >
+                  {message.content}
+                </Text>
+              ) : (
+                <Image
+                  source={{ uri: message.content }}
+                  style={styles.messageImage}
+                  onError={() =>
+                    console.log("Error loading image:", message.content)
+                  }
+                  resizeMode="cover"
+                />
+              )}
+              <Text
+                style={[styles.timestamp, isSentByMe && styles.sentTimestamp]}
+              >
+                {new Date(message.timestamp).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </Text>
             </View>
-          </View>
+          </Pressable>
         );
       })}
     </View>
@@ -118,28 +203,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   messageContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 8,
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   sentMessage: {
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   receivedMessage: {
-    justifyContent: 'flex-start',
+    justifyContent: "flex-start",
   },
   avatarContainer: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#e0e0e0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#e0e0e0",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   avatar: {
     width: 32,
@@ -147,36 +232,42 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   avatarText: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   messageBubble: {
-    maxWidth: '70%',
+    maxWidth: "70%",
     padding: 10,
     borderRadius: 12,
   },
   sentBubble: {
-    backgroundColor: '#0084ff',
+    backgroundColor: "#0084ff",
     borderBottomRightRadius: 0,
   },
   receivedBubble: {
-    backgroundColor: '#e0e0e0',
+    backgroundColor: "#e0e0e0",
     borderBottomLeftRadius: 0,
   },
   messageText: {
     fontSize: 16,
-    color: '#000',
+    color: "#000",
   },
   sentMessageText: {
-    color: '#fff',
+    color: "#fff",
   },
   timestamp: {
     fontSize: 10,
-    color: '#666',
+    color: "#666",
     marginTop: 4,
-    textAlign: 'right',
+    textAlign: "right",
   },
   sentTimestamp: {
-    color: 'rgba(255,255,255,0.7)',
+    color: "rgba(255,255,255,0.7)",
+  },
+  messageImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 8,
+    marginBottom: 4,
   },
 });
 

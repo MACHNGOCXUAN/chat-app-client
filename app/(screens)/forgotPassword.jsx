@@ -52,8 +52,6 @@ const forgotPassword = () => {
       const checkResponse = await axiosInstance.post("/api/auth/checkEmail", {
         email: email
       });
-
-      console.log(checkResponse);
       
   
       if (!checkResponse.data.success) {

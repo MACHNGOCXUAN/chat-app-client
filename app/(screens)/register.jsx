@@ -138,8 +138,6 @@ const RegisterScreen = () => {
         setErrMessage('Bạn phải từ 18 tuổi trở lên để đăng ký tài khoản');
         return;
       }
-
-      console.log("age");
       
 
       
