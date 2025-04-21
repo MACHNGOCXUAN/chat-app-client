@@ -60,10 +60,8 @@ const ReceivedRequests = () => {
       })
 
       const data = await response.data;
-      console.log(data);
       
       if (data.success) {
-        console.log('Chấp nhận yêu cầu:', id);
         setRequests(prev => prev.filter(request => request._id !== id));
       } else {
         console.warn('Lỗi:', data.message);
@@ -74,7 +72,6 @@ const ReceivedRequests = () => {
   };
 
   const handleDecline = (id) => {
-    console.log('Từ chối yêu cầu:', id);
     // Gọi API từ chối ở đây
     setRequests(requests.filter(request => request.id !== id));
   };

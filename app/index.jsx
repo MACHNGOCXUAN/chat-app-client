@@ -38,16 +38,6 @@ const WelcomeScreen = () => {
       socket.off('message');
       socket.disconnect();
     };
-
-    socket.on('message', (data) => {
-      setMessages(prev => [...prev, data]);
-    });
-
-    return () => {
-      socket.off('connect');
-      socket.off('message');
-      socket.disconnect();
-    };
   }, [])
 
 

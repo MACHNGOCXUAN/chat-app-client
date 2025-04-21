@@ -12,7 +12,6 @@ import Toast from "react-native-toast-message";
 import ChatScreen from "./(main)/ChatScreen";
 
 export default function RootLayout() {
-  
   // const otherUser = params.otherUser ? JSON.parse(params.otherUser) : null;
   const [memberCount, setMemberCount] = useState(0);
   return (
@@ -193,31 +192,43 @@ export default function RootLayout() {
 
         <Stack.Screen
           name="(main)/ChatScreen"
-          options={({ navigation }) => ({
+          options={({ navigation, route }) => ({
+            // Thêm navigation vào đây
             title: "",
             headerShown: true,
             headerStyle: { backgroundColor: appColors.primary },
-            headerLeft: () => (
-              <View
-                style={{ flexDirection: "row", gap: 20, alignItems: "center" }}
-              >
-                <MaterialIcons
-                  color={appColors.white}
-                  onPress={() => navigation.goBack()}
-                  name="west"
-                  size={25}
-                />
-                <Text
+            headerLeft: () => {
+              // Không cần destructuring ở đây
+              const otherUser = route.params?.otherUser
+                ? JSON.parse(route.params.otherUser)
+                : null;
+
+              return (
+                <View
                   style={{
-                    fontWeight: "600",
-                    fontSize: 18,
-                    color: appColors.white,
+                    flexDirection: "row",
+                    gap: 20,
+                    alignItems: "center",
                   }}
                 >
-                  xuan
-                </Text>
-              </View>
-            ),
+                  <MaterialIcons
+                    color={appColors.white}
+                    onPress={() => navigation.goBack()} // Sử dụng navigation từ closure
+                    name="west"
+                    size={25}
+                  />
+                  <Text
+                    style={{
+                      fontWeight: "600",
+                      fontSize: 18,
+                      color: appColors.white,
+                    }}
+                  >
+                    {otherUser?.username || "Chat"}
+                  </Text>
+                </View>
+              );
+            },
           })}
         />
       </Stack>

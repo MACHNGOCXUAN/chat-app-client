@@ -86,8 +86,6 @@ const UpdateUserProfileModal = ({ modalVisible = false, setModalVisible = null, 
         email: user.email 
       };
 
-      console.log('Update profile data:', updateData);
-
       const response = await axiosInstance.put('/api/auth/updateProfile', updateData);
 
       if (response.data.user) {
