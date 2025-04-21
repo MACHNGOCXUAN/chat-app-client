@@ -188,7 +188,6 @@ const message = ({ navigation }) => {
         );
       });
     };
-
     socket.on('conversation_updated', handleConversationUpdate);
 
     return () => {
@@ -206,9 +205,9 @@ const message = ({ navigation }) => {
     if (conversationItem?.type !== 'private') return null;
     
     const otherUser = conversationItem.members.find(
-      member => member._id !== user._id
+      member => member?.userId?._id !== user._id
     );
-    return otherUser || conversationItem.members[0];
+    return otherUser.userId || conversationItem.members[0].userId;
   };
   
   
@@ -223,6 +222,9 @@ const message = ({ navigation }) => {
           renderItem={({ item }) => {
 
             const otherUser = getOtherUser(item)
+
+            console.log("otherUser: ", otherUser);
+            
             const lastMessageTime = item.lastMessage ? new Date(item.lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
             return (

@@ -22,120 +22,121 @@ import axiosInstance from "../../utils/axiosInstance";
 const ChatScreen = () => {
   const { user } = useSelector((state) => state.auth);
   const params = useLocalSearchParams();
-  const [conversationId, setConversationId] = useState(params.conversationId || null);
-  // const otherUser = params.otherUser ? JSON.parse(params.otherUser) : null;
+  const [conversationId, setConversationId] = useState(
+    params.conversationId || null
+  );
+  const otherUser = params.otherUser ? JSON.parse(params.otherUser) : null;
   const [messages, setMessages] = useState([]);
-  const [otherUser, setOtherUser] = useState(null);
-  
-  
+  // const [otherUser, setOtherUser] = useState(null);
+
+  // useEffect(() => {
+  //   if (params.otherUser) {
+  //     try {
+  //       const parsed = JSON.parse(params.otherUser);
+  //       setOtherUser(parsed);
+  //     } catch (e) {
+  //       console.error("Invalid JSON for otherUser", e);
+  //     }
+  //   }
+  // }, [params.otherUser]);
+
   useEffect(() => {
-    if (params.otherUser) {
-      try {
-        const parsed = JSON.parse(params.otherUser);
-        setOtherUser(parsed);
-      } catch (e) {
-        console.error("Invalid JSON for otherUser", e);
-      }
-    }
-  }, [params.otherUser]);
-  
-  
-  
-  useEffect(() => {
+    
     if (socket && otherUser?._id && user?._id) {
-      socket.emit('join_conversation', {
+      console.log(otherUser._id);
+      socket.emit("join_conversation", {
         senderId: user._id,
-        rereceiveId: otherUser._id
+        rereceiveId: otherUser._id,
       });
 
-      console.log(otherUser);
-      
-
-      socket.emit('joinUserRoom', user._id);
+      socket.emit("joinUserRoom", user._id);
 
       socket.on("joined_room", (data) => {
-        console.log("data: ", data.conversationId);
-        
-        setConversationId(data.conversationId)
-      })
+        setConversationId(data.conversationId);
+      });
 
       // Lắng nghe khi conversation mới được tạo
-      socket.on('conversation_created', ({ conversationId: newConversationId }) => {
-        setConversationId(newConversationId);
-      });
-  
+      socket.on(
+        "conversation_created",
+        ({ conversationId: newConversationId }) => {
+          setConversationId(newConversationId);
+        }
+      );
+
       return () => {
-        socket.off("joined_room")
-        socket.off('conversation_created');
+        socket.off("joined_room");
+        socket.off("conversation_created");
       };
     }
   }, [otherUser, conversationId]);
-  
 
   // Trong ChatScreen.js
-const handleSendMessage = async (messageContent) => {
-  if (socket && conversationId && user?._id) {
-    if (messageContent.type === "text") {
-      socket.emit('sendMessage', {
-        conversationId,
-        senderId: user._id,
-        content: messageContent.message,
-        messageType: 'text'
-      });
-    } else {
-      try {
-        const response = await axiosInstance.post(
-          "/api/message/uploadimage", 
-          messageContent.image, // Đây là FormData đã được tạo
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
+  const handleSendMessage = async (messageContent) => {
+    if (user?._id && socket) {
+      
+      if (messageContent.type === "text") {
+        socket.emit("sendMessage", {
+          conversationId,
+          senderId: user._id,
+          rereceiveId: otherUser._id,
+          content: messageContent.message,
+          messageType: "text",
+        });
+      } else {
+        try {
+          const response = await axiosInstance.post(
+            "/api/message/uploadNhieuFile",
+            messageContent.image, // Đây là FormData đã được tạo
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+
+          if (response.data.success) {
+            socket.emit("sendMessage", {
+              conversationId,
+              senderId: user._id,
+              rereceiveId: otherUser._id,
+              content: response.data.data, // URL ảnh từ server
+              messageType: "image",
+            });
           }
-        );
-        
-        if(response.data.success) {
-          socket.emit('sendMessage', {
-            conversationId,
-            senderId: user._id,
-            content: response.data.data, // URL ảnh từ server
-            messageType: 'image'
-          });
+        } catch (error) {
+          console.error("Upload error:", error);
         }
-      } catch (error) {
-        console.error("Upload error:", error);
       }
     }
-  }
-};
+  };
 
-const scrollViewRef = useRef();
+  const scrollViewRef = useRef();
 
-// Thêm effect để cuộn xuống cuối khi messages thay đổi
-useEffect(() => {
-  if (scrollViewRef.current && messages.length > 0) {
-    // Sử dụng requestAnimationFrame để đảm bảo scroll sau khi render
-    requestAnimationFrame(() => {
-      scrollViewRef.current.scrollToEnd({ animated: false });
-    });
-  }
-}, [messages]);
-
-// Effect để scroll đến cuối khi vào trang
-useEffect(() => {
-  const timer = setTimeout(() => {
+  // Thêm effect để cuộn xuống cuối khi messages thay đổi
+  useEffect(() => {
     if (scrollViewRef.current && messages.length > 0) {
-      scrollViewRef.current.scrollToEnd({ animated: false });
+      // Sử dụng requestAnimationFrame để đảm bảo scroll sau khi render
+      requestAnimationFrame(() => {
+        scrollViewRef.current.scrollToEnd({ animated: false });
+      });
     }
-  }, 50); // Thêm delay nhỏ để đảm bảo layout đã ổn định
-  
-  return () => clearTimeout(timer);
-}, []);
+  }, [messages]);
+
+  // Effect để scroll đến cuối khi vào trang
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (scrollViewRef.current && messages.length > 0) {
+        scrollViewRef.current.scrollToEnd({ animated: false });
+      }
+    }, 50); // Thêm delay nhỏ để đảm bảo layout đã ổn định
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <SafeAreaView className="h-full w-full">
-      
-      <ScrollView className="p-1 flex-1" 
+      <ScrollView
+        className="p-1 flex-1"
         ref={scrollViewRef}
         contentContainerStyle={styles.scrollContainer}
       >
@@ -146,7 +147,7 @@ useEffect(() => {
         />
       </ScrollView>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={90}
       >
         <InputSend onSend={handleSendMessage} />
@@ -165,5 +166,5 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-  }
+  },
 });

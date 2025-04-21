@@ -1,57 +1,74 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet, Platform, Keyboard, Image } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import EmojiSelector from 'react-native-emoji-selector';
-import * as ImagePicker from 'expo-image-picker';
+import React, { useEffect, useRef, useState } from "react";
+import {
+  View,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+  Keyboard,
+  Image,
+} from "react-native";
+import Icon from "react-native-vector-icons/MaterialIcons";
+import EmojiSelector from "react-native-emoji-selector";
+import * as ImagePicker from "expo-image-picker";
 
 const InputSend = ({ onSend }) => {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [image, setImage] = useState(null);
-  const [imageURI, setImageURI] = useState("");
+  // const [image, setImage] = useState(null);
+  const [image, setImage] = useState([]);
+  const [imageURI, setImageURI] = useState([]);
   const inputRef = useRef();
+  
 
   const pickAvatar = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
+      // allowsEditing: true, // cho phép cắt sửa ảnh
+      // aspect: [1, 1], // tỉ lệ 1:1 vuông
+      allowsMultipleSelection: true, // cho phép chọn nhiều ảnh
+      quality: 1, // chất lượng ảnh
     });
 
     if (!result.canceled) {
-      setImage(result.assets[0].uri);
+      // setImage(result.assets[0].uri);
+
+      const uris = result.assets.map((asset) => asset.uri);
+      setImage((prev) => [...prev, ...uris]);
     }
   };
   useEffect(() => {
-    if (image) {
-      const fileName = image.split('/').pop() || 'avatar.jpg';
-      const fileType = image.split('.').pop() || 'jpg';
-      const mimeType = `image/${fileType === 'jpg' ? 'jpeg' : fileType}`;
-  
+    if (image.length > 0) {
       const formData = new FormData();
-      formData.append("avatarURL", {
-        uri: image,
-        name: fileName,
-        type: mimeType,
+      image.forEach((uri, index) => {
+        const fileName = uri.split("/").pop() || `image-${index}.jpg`;
+        const fileType = uri.split(".").pop() || "jpg";
+        const mimeType = `image/${fileType === "jpg" ? "jpeg" : fileType}`;
+
+        formData.append("ArrayFile", {
+          uri,
+          name: fileName,
+          type: mimeType,
+        });
       });
-  
       setImageURI(formData);
     }
   }, [image]);
 
   const handleSend = () => {
-    if (image) {
-      onSend({ image: imageURI, type: 'image' });
-      setImage(null);
-      setShowEmojiPicker(false);
-      Keyboard.dismiss();
-    } else if (message.trim()) {
-      onSend({ message, type: 'text' });
-      setMessage('');
-      setShowEmojiPicker(false);
-      Keyboard.dismiss();
+    if (image.length > 0) {
+      onSend({ image: imageURI, type: "image" });
+      setImage([]);
+      setImageURI(null);
     }
+
+    if (message.trim()) {
+      onSend({ message, type: "text" });
+      setMessage("");
+    }
+
+    setShowEmojiPicker(false);
+    Keyboard.dismiss();
   };
 
   const handleEmojiPress = () => {
@@ -67,6 +84,10 @@ const InputSend = ({ onSend }) => {
     setMessage((prev) => prev + emoji);
   };
 
+  const handleRemoveImage = (index) => {
+    setImage((prev) => prev.filter((_, i) => i !== index));
+  };
+
   return (
     <>
       {showEmojiPicker && (
@@ -79,18 +100,35 @@ const InputSend = ({ onSend }) => {
       )}
 
       {/* Hiển thị ảnh preview nếu có */}
-      {image && (
-        <View style={styles.previewContainer}>
-          <Image source={{ uri: image }} style={styles.previewImage} />
-          <TouchableOpacity onPress={() => setImage(null)} style={styles.removeImageButton}>
-            <Icon name="close" size={20} color="#fff" />
-          </TouchableOpacity>
+      {image.length > 0 && (
+        <View
+          style={{
+            flexDirection: "row",
+            flexWrap: "wrap",
+            marginHorizontal: 10,
+          }}
+        >
+          {image.map((uri, index) => (
+            <View key={index} style={styles.previewContainer}>
+              <Image source={{ uri }} style={styles.previewImage} />
+              <TouchableOpacity
+                onPress={() => handleRemoveImage(index)}
+                style={styles.removeImageButton}
+              >
+                <Icon name="close" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          ))}
         </View>
       )}
 
       <View style={styles.container}>
         <TouchableOpacity style={styles.iconButton} onPress={handleEmojiPress}>
-          <Icon name="insert-emoticon" size={24} color={showEmojiPicker ? "#2e86de" : "#666"} />
+          <Icon
+            name="insert-emoticon"
+            size={24}
+            color={showEmojiPicker ? "#2e86de" : "#666"}
+          />
         </TouchableOpacity>
 
         <TextInput
@@ -111,12 +149,12 @@ const InputSend = ({ onSend }) => {
         <TouchableOpacity
           style={styles.sendButton}
           onPress={handleSend}
-          disabled={!message.trim() && !image}
+          disabled={!message.trim() && image.length === 0}
         >
           <Icon
-            name={message.trim() || image ? "send" : "mic"}
+            name={message.trim() || image.length > 0 ? "send" : "mic"}
             size={24}
-            color={message.trim() || image ? "#2e86de" : "#666"}
+            color={message.trim() || image.length > 0 ? "#2e86de" : "#666"}
           />
         </TouchableOpacity>
       </View>
@@ -126,26 +164,26 @@ const InputSend = ({ onSend }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 5,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: "#e0e0e0",
   },
   input: {
     flex: 1,
     minHeight: 40,
     maxHeight: 100,
     paddingHorizontal: 15,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 5,
-    backgroundColor: '#fff',
+    paddingVertical: Platform.OS === "ios" ? 10 : 5,
+    backgroundColor: "#fff",
     borderRadius: 20,
     marginHorizontal: 5,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
   },
   iconButton: {
     padding: 8,
@@ -155,8 +193,8 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   previewContainer: {
-    position: 'relative',
-    alignSelf: 'flex-start',
+    position: "relative",
+    alignSelf: "flex-start",
     margin: 10,
   },
   previewImage: {
@@ -165,10 +203,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   removeImageButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 5,
     right: 5,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: "rgba(0,0,0,0.6)",
     borderRadius: 10,
     padding: 2,
   },

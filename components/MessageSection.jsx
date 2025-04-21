@@ -124,6 +124,26 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
     }
   };
 
+  const renderImages = (images) => {
+    if (!Array.isArray(images)) images = [images]; // Đảm bảo luôn là mảng
+    
+    return (
+      <View className = 'grid grid-cols-2 gap-1'>
+        {images.map((uri, index) => (
+          <Image
+            key={index}
+            source={{ uri }}
+            style={[
+              styles.messageImage,
+              images.length === 1 ? styles.singleImage : styles.multiImage
+            ]}
+            resizeMode="cover"
+          />
+        ))}
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
       {messages.map((message) => {
@@ -174,14 +194,7 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
                   {message.content}
                 </Text>
               ) : (
-                <Image
-                  source={{ uri: message.content }}
-                  style={styles.messageImage}
-                  onError={() =>
-                    console.log("Error loading image:", message.content)
-                  }
-                  resizeMode="cover"
-                />
+                renderImages(message.content)
               )}
               <Text
                 style={[styles.timestamp, isSentByMe && styles.sentTimestamp]}
@@ -268,6 +281,53 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 8,
     marginBottom: 4,
+  },
+
+  imagesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  singleImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 12,
+  },
+  multiImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 8,
+  },
+  fileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 8,
+  },
+  fileIconContainer: {
+    marginRight: 10,
+  },
+  fileName: {
+    color: '#fff',
+    flexShrink: 1,
+  },
+  
+  // Thêm style cho video preview nếu cần
+  videoContainer: {
+    position: 'relative',
+  },
+  videoPlayButton: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -20 }, { translateY: -20 }],
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

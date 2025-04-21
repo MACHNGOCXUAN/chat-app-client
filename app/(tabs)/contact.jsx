@@ -58,6 +58,7 @@ const Contacts = () => {
 
           setSearchResults([
             {
+              _id: userFriend._id,
               username: userFriend.username,
               phoneNumber: userFriend.phoneNumber,
               email: userFriend.email,
