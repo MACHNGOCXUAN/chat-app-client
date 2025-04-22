@@ -175,6 +175,16 @@ const message = ({ navigation }) => {
   useEffect(() => {
     fetchConversation();
 
+    const handleGroupCreated = (newConversation) => {
+      setConversation(prev => [newConversation, ...prev]);
+    };
+
+    const handleJoinedConversation = (newConversation) => {
+      console.log("New conversation joined:", newConversation);
+      
+      setConversation(prev => [newConversation, ...prev]);
+    };
+
     const handleConversationUpdate = (updatedConversation) => {
       setConversation(prev => {
         // Cập nhật conversation trong danh sách
@@ -188,12 +198,16 @@ const message = ({ navigation }) => {
         );
       });
     };
+    socket.on('joined_room', handleJoinedConversation);
     socket.on('conversation_updated', handleConversationUpdate);
+    socket.on('group_created', handleGroupCreated);
 
     return () => {
+      socket.off('joined_room', handleJoinedConversation);
       socket.off('conversation_updated', handleConversationUpdate);
+      socket.off('group_created', handleGroupCreated);
     };
-  }, []);
+  }, [socket, accessToken]);
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -220,30 +234,29 @@ const message = ({ navigation }) => {
           data={conversation}
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => {
-
             const otherUser = getOtherUser(item)
-
-            console.log("otherUser: ", otherUser);
-            
             const lastMessageTime = item.lastMessage ? new Date(item.lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
+
+            console.log("knjnk: ", item._id);
+            
             return (
               <Card
                 onPress={() => router.push({
                   pathname: "/(main)/ChatScreen",
                   params: { 
-                    conversationId: item._id,
+                    conversation: JSON.stringify(item),
                     otherUser: JSON.stringify(otherUser) // Truyền thông tin người dùng khác
                   }
                 })}
               >
                 <UserInfo>
                   <UserImgWrapper>
-                    <UserImg source={otherUser?.avatarURL ? { uri: otherUser.avatarURL } : require("../../assets/users/user-4.jpg") } />
+                    <UserImg source={ item.type === "private" ? { uri: otherUser?.avatarURL }: {uri: item?.imageGroup} } />
                   </UserImgWrapper>
                   <TextSection>
                     <UserInfoText>
-                      <UserName>{otherUser?.username}</UserName>
+                      <UserName>{item.type === "private" ? otherUser?.username : item?.name}</UserName>
                       <PostTime>{lastMessageTime}</PostTime>
                     </UserInfoText>
                     <MessageText>

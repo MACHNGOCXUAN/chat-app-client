@@ -32,11 +32,10 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
         const response = await axiosInstance.get(
           `/api/message/${conversationId}`
         );
-        if (response.data.success) {
-          setMessages(response.data.data);
-        }
+        setMessages(response.data.data);
       } catch (error) {
-        console.error("Failed to fetch messages:", error);
+        console.log("Failed to fetch messages:", error);
+        
       }
     };
 
@@ -65,6 +64,7 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
         )
       );
     };
+    
 
     socket.on("message_sent", handleNewMessage);
     socket.on("receive_message", handleNewMessage);
@@ -129,9 +129,9 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
     
     return (
       <View className = 'grid grid-cols-2 gap-1'>
-        {images.map((uri, index) => (
+        {images.map((uri) => (
           <Image
-            key={index}
+            key={uri}
             source={{ uri }}
             style={[
               styles.messageImage,
