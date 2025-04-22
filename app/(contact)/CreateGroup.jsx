@@ -1,64 +1,169 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TextInput, FlatList, Pressable, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import avatar from '../../assets/images/avatar.png'
-import { useRoute } from '@react-navigation/native';
+import React, { useEffect, useRef, useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  Pressable,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+} from "react-native";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import { useRoute, useNavigation } from "@react-navigation/native";
+import { useSelector } from "react-redux";
+import axiosInstance from "../../utils/axiosInstance";
+import socket from "../../utils/socket";
+import { router } from "expo-router";
 
-const CreateGroup = ({ navigation }) => {
-  const [groupName, setGroupName] = useState('');
+const CreateGroup = () => {
+  const [groupName, setGroupName] = useState("");
   const [selectedContacts, setSelectedContacts] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-
+  const [members, setMembers] = useState([]);
+  const [isCreating, setIsCreating] = useState(false);
+  const { accessToken, user } = useSelector((state) => state.auth);
+  const navigation = useNavigation();
   const route = useRoute();
-  const setMemberCount = route.params?.setMemberCount;  
+  const setMemberCount = route.params?.setMemberCount;
+  const inputRef = useRef(null);
 
-  const allMembers = [
-    { id: '1', name: 'Người dùng 1', avatar: avatar, time: '10 giờ trước' },
-    { id: '2', name: 'Người dùng 2', avatar: avatar, time: '10 giờ trước' },
-    { id: '3', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
-    { id: '4', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
-    { id: '5', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
-    { id: '6', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
-    { id: '7', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
-    { id: '8', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
-    { id: '9', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
-    { id: '10', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
-    { id: '11', name: 'Người dùng 3', avatar: avatar, time: '10 giờ trước' },
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        const response = await axiosInstance.get("/api/friend/friends", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
 
-  ];
+        const accepted = response.data.acceptedFriends || [];
+        const formattedMembers = accepted.map((friend) => ({
+          _id: friend._id,
+          username: friend.username,
+          avatarURL: friend.avatarURL ? { uri: friend.avatarURL } : avatar,
+        }));
+        setMembers(formattedMembers);
+      } catch (error) {
+        console.error("Error fetching friends:", error);
+        Alert.alert("Error", "Could not fetch friends list");
+      }
+    };
+
+    fetchFriends();
+
+    // Socket listeners
+
+    socket.on("group_created", (conversation) => {
+      setIsCreating(false);
+      router.push({
+        pathname: "/(main)/ChatScreen",
+        params: { 
+          conversation: JSON.stringify(conversation)
+        }
+      })
+    });
+
+    socket.on("error", (error) => {
+      setIsCreating(false);
+      Alert.alert("Error", error.message || "Failed to create group");
+    });
+
+    return () => {
+      socket.off("group_created");
+      socket.off("error");
+    };
+  }, [accessToken, navigation]);
 
   const toggleSelect = (contact) => {
     setSelectedContacts((prev) =>
-      prev.some((c) => c.id === contact.id)
-        ? prev.filter((c) => c.id !== contact.id)
+      prev.some((c) => c._id === contact._id)
+        ? prev.filter((c) => c._id !== contact._id)
         : [...prev, contact]
     );
   };
 
-  const handleCreateGroup = () => {
-    if (groupName.trim() === '') {
-      alert('Vui lòng nhập tên nhóm');
+  const handleCreateGroup = async () => {
+    if (isCreating) return;
+    
+    if (!groupName.trim()) {
+      Alert.alert("Error", "Please enter group name");
       return;
     }
-    if (selectedMembers.length === 0) {
-      alert('Vui lòng chọn ít nhất một thành viên');
+
+    if (selectedContacts.length === 0) {
+      Alert.alert("Error", "Please select at least one member");
       return;
     }
-    navigation.goBack();
+
+    setIsCreating(true);
+    const memberIds = selectedContacts.map((contact) => contact._id);
+
+    try {
+      if (selectedImage) {
+        const uriParts = selectedImage.split(".");
+        const fileType = uriParts[uriParts.length - 1];
+
+        const formData = new FormData();
+        formData.append("avatarURL", {
+          uri: selectedImage,
+          name: `group_avatar.${fileType}`,
+          type: `image/${fileType}`,
+        });
+
+        const uploadResponse = await axiosInstance.post(
+          "/api/message/uploadimage",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        if (uploadResponse.data.success) {
+          socket.emit("create_group", {
+            creatorId: user._id,
+            name: groupName.trim(),
+            imageGroup: uploadResponse.data.data,
+            members: memberIds,
+          });
+        }
+      } else {
+        socket.emit("create_group", {
+          creatorId: user._id,
+          name: groupName.trim(),
+          members: memberIds,
+        });
+      }
+    } catch (error) {
+      setIsCreating(false);
+      console.error("Error:", error);
+      Alert.alert("Error", "Failed to create group");
+    }
   };
 
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images', 'videos'],
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (!permissionResult.granted) {
+      Alert.alert("Permission required", "Need camera roll permission to select images");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
+      aspect: [1, 1],
+      quality: 0.5,
     });
 
-    if (!result.canceled) {
+    if (!result.canceled && result.assets) {
       setSelectedImage(result.assets[0].uri);
     }
   };
@@ -67,102 +172,112 @@ const CreateGroup = ({ navigation }) => {
     if (setMemberCount) {
       setMemberCount(selectedContacts.length);
     }
-  }, [selectedContacts]);
+  }, [selectedContacts, setMemberCount]);
 
-  const inputRef = useRef(null);
-
+  const filteredMembers = members.filter((member) =>
+    member.username.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <View className='flex-1 relative'>
-      <View className='p-5 flex-col gap-5'>
-        <View className='flex flex-row items-center'>
-          {
-            selectedImage?(
-              <Pressable onPress={pickImage} className='rounded-full'>
-                <Image source={{ uri: selectedImage }} className='size-16 rounded-full'/>
-              </Pressable>
-            ):(
-              <Pressable onPress={pickImage} className='bg-slate-400 opacity-45 rounded-full'>
-                <Ionicons className='p-4' size={30} name='camera-outline'/>
-              </Pressable>
-            )
-          }
-          <View className='relative flex-1'>
+    <View className="flex-1 relative bg-white">
+      <View className="p-5 flex-col gap-5">
+        <View className="flex flex-row items-center gap-4">
+          <Pressable onPress={pickImage}>
+            {selectedImage ? (
+              <Image
+                source={{ uri: selectedImage }}
+                className="w-16 h-16 rounded-full"
+              />
+            ) : (
+              <View className="bg-gray-200 w-16 h-16 rounded-full justify-center items-center">
+                <Ionicons name="camera-outline" size={24} color="#666" />
+              </View>
+            )}
+          </Pressable>
+
+          <View className="flex-1">
             <TextInput
-              className={`text-[20px] ml-4 leading-none py-2 pr-12 border-b-[1px] ${isFocused ? "border-[#0045AD]": "border-transparent"}`}
-              placeholder="Đặt tên nhóm"
+              ref={inputRef}
+              className={`text-xl py-2 border-b ${isFocused ? "border-blue-500" : "border-gray-300"}`}
+              placeholder="Group name"
               placeholderTextColor="#888"
               value={groupName}
               onChangeText={setGroupName}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
             />
-            {
-              isFocused && <Ionicons name='image-outline' size={25} className='absolute right-3 bottom-1 opacity-70'/>
-            }
-            
           </View>
-          {
-            isFocused && 
-            <Pressable  onPress={() => inputRef.current?.focus()}>
-              <Ionicons name='checkmark-outline' size={35} className='font-bold' color="#0045AD"/>
-            </Pressable>
-          }
         </View>
 
-        <View className='relative'>
+        <View className="relative">
           <TextInput
-            ref={inputRef}
-            className='bg-[#ECF9F0] text-[18px] border-[1px] border-[#888] py-3 rounded-[10px] pl-12'
-            placeholder="Tìm tên hoặc số điện thoại"
+            className="bg-gray-100 text-lg border border-gray-300 py-2 rounded-lg pl-12"
+            placeholder="Search friends"
             placeholderTextColor="#888"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
-
-          <Ionicons color='#888' name='search-outline' size={25} className='absolute top-1/2 -translate-y-1/2 left-2'/>
+          <Ionicons
+            name="search-outline"
+            size={24}
+            color="#888"
+            style={{ position: "absolute", left: 12, top: 12 }}
+          />
         </View>
+
         <FlatList
-          data={allMembers.filter(member =>
-            member.name.toLowerCase().includes(searchQuery.toLowerCase())
-          )}
-          showsVerticalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle = {{ paddingBottom: 200 }}
+          data={filteredMembers}
+          keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => toggleSelect(item)}
-              className='h-[70px]'
+              className="h-16 flex-row items-center my-1"
             >
-              <View className='flex-row gap-4 items-center'>
-                <View className={`size-7 rounded-full border-[2px] border-[#ADD1FF] flex-row justify-center items-center ${selectedContacts.some(c => c.id === item.id)?"bg-blue-600":"bg-transparent"}`}>
-                  {selectedContacts.some(c => c.id === item.id) && (
-                    <Ionicons color="#fff" name='checkmark-outline'/>
-                  )}
-                </View>
-                <Image source={item.avatar} className='size-16 rounded-full' />
-                <View>
-                  <Text className='text-[18px]'>{item.name}</Text>
-                  <Text className='opacity-55 text-black'>{item.time}</Text>
-                </View>
+              <View className={`w-7 h-7 rounded-full border-2 border-blue-200 mr-3 justify-center items-center ${
+                selectedContacts.some((c) => c._id === item._id) ? "bg-blue-500" : "bg-transparent"
+              }`}>
+                {selectedContacts.some((c) => c._id === item._id) && (
+                  <Ionicons name="checkmark" size={16} color="white" />
+                )}
               </View>
+              <Image source={item.avatarURL} className="w-12 h-12 rounded-full mr-3" />
+              <Text className="text-lg">{item.username}</Text>
             </TouchableOpacity>
           )}
+          ListEmptyComponent={
+            <Text className="text-center text-gray-500 mt-10">No friends found</Text>
+          }
         />
       </View>
 
       {selectedContacts.length > 0 && (
-        <View className='bg-white absolute bottom-0 w-full flex-row items-center justify-between p-4'>
-          <View className='flex-row'>
+        <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200 flex-row items-center">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="flex-1 mr-3"
+          >
             {selectedContacts.map((contact) => (
-              <View key={contact.id} className='pl-4 flex-row items-center justify-center'>
-                <Image source={ contact.avatar} className='size-16 rounded-full' />
+              <View key={contact._id} className="mr-2">
+                <Image
+                  source={contact.avatarURL}
+                  className="w-12 h-12 rounded-full"
+                />
               </View>
             ))}
-          </View>
-          <Pressable className='bg-blue-700 p-3 rounded-full flex-row justify-center items-center'>
-            <MaterialIcons name='send' size={25} color='#fff'/>
-          </Pressable>
+          </ScrollView>
+          
+          <TouchableOpacity
+            onPress={handleCreateGroup}
+            disabled={isCreating}
+            className="bg-blue-600 p-3 rounded-full"
+          >
+            <MaterialIcons 
+              name="send" 
+              size={24} 
+              color="white" 
+            />
+          </TouchableOpacity>
         </View>
       )}
     </View>

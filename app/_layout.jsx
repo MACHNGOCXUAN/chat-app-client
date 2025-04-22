@@ -45,7 +45,7 @@ export default function RootLayout() {
               </View>
             ),
           })}
-          initialParams={{ setMemberCount }}
+          // initialParams={{ setMemberCount }}
         />
 
         <Stack.Screen
@@ -203,6 +203,10 @@ export default function RootLayout() {
                 ? JSON.parse(route.params.otherUser)
                 : null;
 
+              const conversation = route.params?.conversation
+                ? JSON.parse(route.params.conversation)
+                : null;
+
               return (
                 <View
                   style={{
@@ -224,7 +228,7 @@ export default function RootLayout() {
                       color: appColors.white,
                     }}
                   >
-                    {otherUser?.username || "Chat"}
+                    { conversation.type === "private" ? otherUser?.username : conversation?.name }
                   </Text>
                 </View>
               );

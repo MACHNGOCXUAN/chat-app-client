@@ -2,7 +2,7 @@ import { io } from "socket.io-client";
 
 const socket = io("http://192.168.1.155:5000", {
   transports: ['websocket'],
-  reconnection: false
+  reconnection: true
 });
 
 // socket.on("connect", () => {

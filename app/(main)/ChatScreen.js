@@ -22,9 +22,9 @@ import axiosInstance from "../../utils/axiosInstance";
 const ChatScreen = () => {
   const { user } = useSelector((state) => state.auth);
   const params = useLocalSearchParams();
-  const [conversationId, setConversationId] = useState(
-    params.conversationId || null
-  );
+  const conversation = params.conversation ? JSON.parse(params.conversation) : null
+  
+  const [conversationId, setConversationId] = useState(conversation?._id || null);
   const otherUser = params.otherUser ? JSON.parse(params.otherUser) : null;
   const [messages, setMessages] = useState([]);
   // const [otherUser, setOtherUser] = useState(null);
@@ -41,44 +41,55 @@ const ChatScreen = () => {
   // }, [params.otherUser]);
 
   useEffect(() => {
-    
-    if (socket && otherUser?._id && user?._id) {
-      console.log(otherUser._id);
+    if (!socket || !user?._id) return;
+
+    // Nếu là chat 1-1
+    if (otherUser?._id) {
       socket.emit("join_conversation", {
         senderId: user._id,
-        rereceiveId: otherUser._id,
+        receiveId: otherUser._id,
+        conversationId: conversationId,
       });
-
-      socket.emit("joinUserRoom", user._id);
-
-      socket.on("joined_room", (data) => {
-        setConversationId(data.conversationId);
-      });
-
-      // Lắng nghe khi conversation mới được tạo
-      socket.on(
-        "conversation_created",
-        ({ conversationId: newConversationId }) => {
-          setConversationId(newConversationId);
-        }
-      );
-
-      return () => {
-        socket.off("joined_room");
-        socket.off("conversation_created");
-      };
     }
-  }, [otherUser, conversationId]);
+    // Nếu là chat nhóm
+    else if (conversationId) {
+      socket.emit("join_group_conversation", {
+        conversationId: conversationId,
+        userId: user._id,
+      });
+    }
+
+    socket.emit("joinUserRoom", user._id);
+
+    // Lắng nghe sự kiện khi join room thành công
+    socket.on("joined_room", (data) => {
+      if (data.conversationId) {
+        setConversationId(data.conversationId);
+      }
+    });
+
+    // Lắng nghe khi conversation mới được tạo
+    socket.on("conversation_created", ({ conversationId: newConversationId }) => {
+      setConversationId(newConversationId);
+    });
+
+    return () => {
+      socket.off("joined_room");
+      socket.off("conversation_created");
+    };
+  }, [otherUser, conversationId, user]);
+  
 
   // Trong ChatScreen.js
   const handleSendMessage = async (messageContent) => {
     if (user?._id && socket) {
       
       if (messageContent.type === "text") {
+        
         socket.emit("sendMessage", {
           conversationId,
           senderId: user._id,
-          rereceiveId: otherUser._id,
+          rereceiveId: otherUser?._id,
           content: messageContent.message,
           messageType: "text",
         });
