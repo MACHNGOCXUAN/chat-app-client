@@ -228,7 +228,7 @@ export default function RootLayout() {
                       color: appColors.white,
                     }}
                   >
-                    { conversation.type === "private" ? otherUser?.username : conversation?.name }
+                    { conversation?.type === "group"  ? conversation?.name : otherUser?.username }
                   </Text>
                 </View>
               );

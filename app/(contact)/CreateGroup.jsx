@@ -17,6 +17,7 @@ import { useSelector } from "react-redux";
 import axiosInstance from "../../utils/axiosInstance";
 import socket from "../../utils/socket";
 import { router } from "expo-router";
+import avatar from "../../assets/images/avatar.png";
 
 const CreateGroup = () => {
   const [groupName, setGroupName] = useState("");
@@ -67,6 +68,10 @@ const CreateGroup = () => {
         }
       })
     });
+
+    socket.on("friend_request_accepted", () => {
+      fetchFriends()
+    })
 
     socket.on("error", (error) => {
       setIsCreating(false);

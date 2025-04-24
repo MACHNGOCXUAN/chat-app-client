@@ -160,7 +160,7 @@ const RegisterScreen = () => {
         gender: gender
       };
   
-      const response = await axiosInstance.post("/register", data);
+      const response = await axiosInstance.post("/api/auth/register", data);
       
       
       if (response.data.user) {
@@ -168,6 +168,8 @@ const RegisterScreen = () => {
         router.replace('/(screens)/login');
       }
     } catch (error) {
+      console.log(error);
+      
       setErrMessage(
         error.error ||
         'Đăng ký thất bại. Vui lòng thử lại sau'

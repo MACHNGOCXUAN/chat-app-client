@@ -76,31 +76,6 @@ const Contacts = () => {
         setSearchResults([]);
       }
     }
-
-    // const mockFriends = [
-    //   { id: 1, name: "Nguyễn Văn A", phone: "0987654321", avatar: avatar, isFriend: true },
-    //   { id: 2, name: "Trần Thị B", phone: "0912345678", avatar: avatar, isFriend: false },
-    // ];
-
-    // const mockGroups = [
-    //   { id: 1, name: "Nhóm lớp học", members: 20 },
-    //   { id: 2, name: "0912345678 đồng nghiệp", members: 15 },
-    // ];
-
-    // // Lọc kết quả phù hợp
-    // const filteredFriends = mockFriends.filter(item =>
-    //   item.name.toLowerCase().includes(text.toLowerCase()) ||
-    //   item.phone.includes(text)
-    // );
-
-    // const filteredGroups = mockGroups.filter(item =>
-    //   item.name.toLowerCase().includes(text.toLowerCase())
-    // );
-
-    // setSearchResults([
-    //   ...filteredFriends.map(item => ({ ...item, type: 'friend' })),
-    //   ...filteredGroups.map(item => ({ ...item, type: 'group' }))
-    // ]);
   };
 
   const addFriend = async (receiverPhone) => {
@@ -214,7 +189,7 @@ const Contacts = () => {
   };
 
   return (
-    <>
+    <View className='flex-1'>
       <Header
         setIsFocus={setIsFocus}
         isFocus={isFocus}
@@ -293,7 +268,7 @@ const Contacts = () => {
           )}
         </View>
       )}
-    </>
+    </View>
   );
 };
 

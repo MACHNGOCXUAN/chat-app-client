@@ -8,9 +8,9 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
 import avatar from "../../assets/images/avatar.png";
 import { useRoute } from "@react-navigation/native";
 import Header from "../../components/Header";
@@ -31,115 +31,25 @@ import { router } from "expo-router";
 import axiosInstance from "../../utils/axiosInstance";
 import { useSelector } from "react-redux";
 
+const isIOS = Platform.OS === "ios";
+
 const message = ({ navigation }) => {
-  const {accessToken, user} = useSelector(state => state.auth)
+  const { accessToken, user } = useSelector((state) => state.auth);
   const [groupName, setGroupName] = useState("");
   const [selectedContacts, setSelectedContacts] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [conversation, setConversation] = useState([])
+  const [conversation, setConversation] = useState([]);
 
   const [isFocus, setIsFocus] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState([]);
 
-  const handleSearch = (text) => {
-    setSearchText(text);
-
-    if (text.trim() === "") {
-      setSearchResults([]);
-      return;
-    }
-
-    const mockFriends = [
-      {
-        id: 1,
-        name: "Nguyễn Văn A",
-        phone: "0987654321",
-        avatar: avatar,
-        isFriend: true,
-      },
-      {
-        id: 2,
-        name: "Trần Thị B",
-        phone: "0912345678",
-        avatar: avatar,
-        isFriend: false,
-      },
-    ];
-
-    const mockGroups = [
-      { id: 1, name: "Nhóm lớp học", members: 20 },
-      { id: 2, name: "0912345678 đồng nghiệp", members: 15 },
-    ];
-
-    // Lọc kết quả phù hợp
-    const filteredFriends = mockFriends.filter(
-      (item) =>
-        item.name.toLowerCase().includes(text.toLowerCase()) ||
-        item.phone.includes(text)
-    );
-
-    const filteredGroups = mockGroups.filter((item) =>
-      item.name.toLowerCase().includes(text.toLowerCase())
-    );
-
-    setSearchResults([
-      ...filteredFriends.map((item) => ({ ...item, type: "friend" })),
-      ...filteredGroups.map((item) => ({ ...item, type: "group" })),
-    ]);
-  };
+  
 
   const route = useRoute();
   const setMemberCount = route.params?.setMemberCount;
-
-  const allMembers = [
-    { id: "1", name: "Người dùng 1", avatar: avatar, time: "10 giờ trước" },
-    { id: "2", name: "Người dùng 2", avatar: avatar, time: "10 giờ trước" },
-    { id: "3", name: "Người dùng 3", avatar: avatar, time: "10 giờ trước" },
-    { id: "4", name: "Người dùng 3", avatar: avatar, time: "10 giờ trước" },
-    { id: "5", name: "Người dùng 3", avatar: avatar, time: "10 giờ trước" },
-    { id: "6", name: "Người dùng 3", avatar: avatar, time: "10 giờ trước" },
-    { id: "7", name: "Người dùng 3", avatar: avatar, time: "10 giờ trước" },
-    { id: "8", name: "Người dùng 3", avatar: avatar, time: "10 giờ trước" },
-    { id: "9", name: "Người dùng 3", avatar: avatar, time: "10 giờ trước" },
-    { id: "10", name: "Người dùng 3", avatar: avatar, time: "10 giờ trước" },
-    { id: "11", name: "Người dùng 3", avatar: avatar, time: "10 giờ trước" },
-  ];
-
-  const toggleSelect = (contact) => {
-    setSelectedContacts((prev) =>
-      prev.some((c) => c.id === contact.id)
-        ? prev.filter((c) => c.id !== contact.id)
-        : [...prev, contact]
-    );
-  };
-
-  const handleCreateGroup = () => {
-    if (groupName.trim() === "") {
-      alert("Vui lòng nhập tên nhóm");
-      return;
-    }
-    if (selectedMembers.length === 0) {
-      alert("Vui lòng chọn ít nhất một thành viên");
-      return;
-    }
-    // navigation.goBack();
-  };
-
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images", "videos"],
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setSelectedImage(result.assets[0].uri);
-    }
-  };
 
   useEffect(() => {
     if (setMemberCount) {
@@ -147,65 +57,69 @@ const message = ({ navigation }) => {
     }
   }, [selectedContacts]);
 
-  const inputRef = useRef(null);
-
-
   const fetchConversation = async () => {
     try {
-      const response = await axiosInstance.get("/api/conversation/conversation", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
+      const response = await axiosInstance.get(
+        "/api/conversation/conversation",
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
         }
-      });
+      );
 
       if (response.data.success) {
         const accepted = response.data.data || [];
         setConversation(accepted);
-        getOtherUser()
+        getOtherUser();
       } else {
-        console.error("Request succeeded but API returned false:", response.data);
+        console.error(
+          "Request succeeded but API returned false:",
+          response.data
+        );
       }
     } catch (error) {
       console.error("Failed to fetch conversation:", error);
     }
   };
 
-
-
   useEffect(() => {
     fetchConversation();
 
     const handleGroupCreated = (newConversation) => {
-      setConversation(prev => [newConversation, ...prev]);
+      setConversation((prev) => [newConversation, ...prev]);
     };
 
     const handleJoinedConversation = (newConversation) => {
       console.log("New conversation joined:", newConversation);
-      
-      setConversation(prev => [newConversation, ...prev]);
+
+      setConversation((prev) => [newConversation, ...prev]);
     };
 
     const handleConversationUpdate = (updatedConversation) => {
-      setConversation(prev => {
+      setConversation((prev) => {
         // Cập nhật conversation trong danh sách
-        const updated = prev.map(conv => 
+        const updated = prev.map((conv) =>
           conv._id === updatedConversation._id ? updatedConversation : conv
         );
-        
+
         // Sắp xếp lại theo thời gian cập nhật
-        return updated.sort((a, b) => 
-          new Date(b.updatedAt) - new Date(a.updatedAt)
+        return updated.sort(
+          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
         );
       });
     };
-    socket.on('joined_room', handleJoinedConversation);
-    socket.on('conversation_updated', handleConversationUpdate);
-    socket.on('group_created', handleGroupCreated);
+    
+    socket.on("joined_room", handleJoinedConversation);
+    socket.on("conversation_updated", handleConversationUpdate);
+    socket.on("group_created", () => {
+      fetchConversation()
+    });
 
     return () => {
-      socket.off('joined_room', handleJoinedConversation);
-      socket.off('conversation_updated', handleConversationUpdate);
-      socket.off('group_created', handleGroupCreated);
+      socket.off("joined_room", handleJoinedConversation);
+      socket.off("conversation_updated", handleConversationUpdate);
+      socket.off("group_created", handleGroupCreated);
     };
   }, [socket, accessToken]);
 
@@ -216,56 +130,217 @@ const message = ({ navigation }) => {
   }, []);
 
   const getOtherUser = (conversationItem) => {
-    if (conversationItem?.type !== 'private') return null;
-    
+    if (conversationItem?.type !== "private") return null;
+
     const otherUser = conversationItem.members.find(
-      member => member?.userId?._id !== user._id
+      (member) => member?.userId?._id !== user._id
     );
     return otherUser.userId || conversationItem.members[0].userId;
   };
-  
-  
+
+  const renderSearchItem = ({ item }) => {
+    if (item.type == "friend") {
+      return (
+        <TouchableOpacity
+          onPress={() =>
+            router.push({
+              pathname: "/(main)/ChatScreen",
+              params: {
+                otherUser: JSON.stringify(item),
+              },
+            })
+          }
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            padding: 15,
+            justifyContent: "space-between",
+          }}
+        >
+          <View style={styles.friendItem} className="flex flex-row gap-5">
+            <View>
+              <Image
+                source={item?.avatarURL ? { uri: item?.avatarURL } : avatar}
+                style={styles.avatar}
+              />
+            </View>
+            <View>
+              <Text className="text-lg font-semibold">{item.username}</Text>
+              <Text className="text-gray-600">{item.phoneNumber}</Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: "row", gap: 20 }}>
+            {item.isFriend ? (
+              <TouchableOpacity>
+                <Ionicons name="call-outline" size={25} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity onPress={() => addFriend(item.phoneNumber)}>
+                <Ionicons name="person-add-outline" size={25} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </TouchableOpacity>
+      );
+    } else {
+      return (
+        <View className="p-3 border-b border-gray-200">
+          <Text className="text-lg font-semibold">{item.name}</Text>
+          <Text className="text-gray-600">{item.members} thành viên</Text>
+        </View>
+      );
+    }
+  };
+
+  const handleSearch = async (text) => {
+    setSearchText(text);
+
+    if (text.trim() === "") {
+      setSearchResults([]);
+      return;
+    }
+
+    const isPhoneNumber = /^\d{10}$/.test(text);
+
+    if (isPhoneNumber) {
+      try {
+        const response = await axiosInstance.get("/api/auth/searchphone", {
+          params: { phoneNumber: text },
+        });
+
+        const userFriend = response.data;
+
+        if (userFriend) {
+          const isFriend = userFriend.friends.find(
+            (f) =>
+              f.friendId.toString() === user._id.toString() &&
+              f.status === "accepted"
+          );
+
+          setSearchResults([
+            {
+              _id: userFriend._id,
+              username: userFriend.username,
+              phoneNumber: userFriend.phoneNumber,
+              email: userFriend.email,
+              avatarURL: userFriend.avatarURL,
+              isFriend: isFriend,
+              type: "friend",
+            },
+          ]);
+        } else {
+          setSearchResults([]);
+          Alert("loi");
+        }
+      } catch (error) {
+        console.error("Search API error:", error);
+        setSearchResults([]);
+      }
+    }
+  };
+
+  const addFriend = async (receiverPhone) => {
+    const senderPhone = user.phoneNumber;
+
+    try {
+      const res = await axiosInstance.post("/api/friend/request", {
+        senderPhone,
+        receiverPhone,
+      });
+
+      if (res.data && !res.data.success) {
+        Alert.alert(
+          "❌ Lỗi",
+          res.data.message || "Không gửi được lời mời kết bạn."
+        );
+        return;
+      }
+      Alert.alert(
+        "✅ Thành công",
+        res.data?.message || "Đã gửi lời mời kết bạn."
+      );
+    } catch (error) {
+      Alert.alert("❌ Lỗi", "Không gửi được lời mời.");
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    if (user?._id) {
+      socket.emit("joinUserRoom", user._id);
+
+      socket.on("friendRequestReceived", (data) => {
+        Alert.alert(
+          "📬 Lời mời kết bạn",
+          `${data.username} muốn kết bạn với bạn`
+        );
+        // showToast(data)
+      });
+
+      return () => {
+        socket.off("friendRequestReceived");
+      };
+    }
+  }, [user?._id]);
 
   return (
     <>
-      <Header setIsFocus = {setIsFocus} isFocus = {isFocus} onSearch={handleSearch}/>
+      <Header
+        setIsFocus={setIsFocus}
+        isFocus={isFocus}
+        onSearch={handleSearch}
+      />
       <Container>
         <FlatList
           data={conversation}
-          keyExtractor={(item) => item._id}
+          keyExtractor={(item) => item?._id}
           renderItem={({ item }) => {
-            const otherUser = getOtherUser(item)
-            const lastMessageTime = item.lastMessage ? new Date(item.lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+            const otherUser = getOtherUser(item);
+            const lastMessageTime = item.lastMessage
+              ? new Date(item.lastMessage.timestamp).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "";
 
-
-            console.log("knjnk: ", item._id);
-            
             return (
               <Card
-                onPress={() => router.push({
-                  pathname: "/(main)/ChatScreen",
-                  params: { 
-                    conversation: JSON.stringify(item),
-                    otherUser: JSON.stringify(otherUser) // Truyền thông tin người dùng khác
-                  }
-                })}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(main)/ChatScreen",
+                    params: {
+                      conversation: JSON.stringify(item),
+                      otherUser: JSON.stringify(otherUser), // Truyền thông tin người dùng khác
+                    },
+                  })
+                }
               >
                 <UserInfo>
                   <UserImgWrapper>
-                    <UserImg source={ item.type === "private" ? { uri: otherUser?.avatarURL }: {uri: item?.imageGroup} } />
+                    <UserImg
+                      source={
+                        item.type === "private"
+                          ? { uri: otherUser?.avatarURL }
+                          : { uri: item?.imageGroup }
+                      }
+                    />
                   </UserImgWrapper>
                   <TextSection>
                     <UserInfoText>
-                      <UserName>{item.type === "private" ? otherUser?.username : item?.name}</UserName>
+                      <UserName>
+                        {item.type === "private"
+                          ? otherUser?.username
+                          : item?.name}
+                      </UserName>
                       <PostTime>{lastMessageTime}</PostTime>
                     </UserInfoText>
                     <MessageText>
-                      {item.lastMessage?.content || 'No messages yet'}
+                      {item.lastMessage?.content || "No messages yet"}
                     </MessageText>
                   </TextSection>
                 </UserInfo>
               </Card>
-            )
+            );
           }}
         />
         {selectedContacts.length > 0 && (
@@ -289,6 +364,55 @@ const message = ({ navigation }) => {
           </View>
         )}
       </Container>
+
+      {isFocus && (
+        <View
+          className={`px-5 pb-3 flex-1 bg-white absolute left-0 right-0 bottom-0 ${
+            isIOS ? "top-28" : "top-16"
+          }`}
+        >
+          {searchText ? (
+            searchResults.length > 0 ? (
+              <FlatList
+                data={searchResults}
+                renderItem={renderSearchItem}
+                keyExtractor={(item) => `${item.type}-${item.id}`}
+                className="mt-2"
+              />
+            ) : (
+              <Text className="text-gray-500 mt-4 text-center">
+                Không tìm thấy kết quả
+              </Text>
+            )
+          ) : (
+            <View className="mt-4">
+              <Text className="text-gray-700 font-semibold">
+                Gợi ý tìm kiếm
+              </Text>
+              <View className="flex-row flex-wrap mt-2">
+                <TouchableOpacity
+                  className="bg-gray-100 rounded-full px-3 py-1 mr-2 mb-2"
+                  onPress={() => {
+                    setSearchText("098");
+                    handleSearch("098");
+                  }}
+                >
+                  <Text className="text-gray-700">098...</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="bg-gray-100 rounded-full px-3 py-1 mr-2 mb-2"
+                  onPress={() => {
+                    setSearchText("Nhóm");
+                    handleSearch("Nhóm");
+                  }}
+                >
+                  <Text className="text-gray-700">Nhóm...</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+      )}
     </>
   );
 };
@@ -300,5 +424,16 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+  },
+  friendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 100,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

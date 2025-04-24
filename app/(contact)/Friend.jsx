@@ -21,23 +21,9 @@ const Friend = () => {
 
   const {accessToken, user} = useSelector(state => state.auth)
 
-  const features = [
-    { id: "1", name: "Lời mời kết bạn (13)", icon: "user-group" },
-    { id: "2", name: "Danh bạ máy", icon: "id-badge", description: "Liên hệ có dùng Zalo" },
-    { id: "3", name: "Sinh nhật", icon: "cake-candles" },
-  ];
-
-  const [friends, setFriends] = useState([
-    { id: "101", name: "Nguyễn Văn A", avatar: avatar },
-    { id: "102", name: "Trần Thị B", avatar: avatar },
-    { id: "103", name: "Lê Minh C", avatar: avatar },
-    { id: "104", name: "Phạm Hữu D", avatar: avatar },
-    { id: "105", name: "Đặng Văn E", avatar: avatar },
-    { id: "106", name: "Đặng Văn E", avatar: avatar },
-    { id: "107", name: "Đặng Văn E", avatar: avatar },
-    { id: "108", name: "Đặng Văn E", avatar: avatar },
-    { id: "109", name: "Đặng Văn E", avatar: avatar },
-  ]);
+  const [friends, setFriends] = useState([]);
+  const [requests, setRequests] = useState([])
+  
 
   useEffect(() => {
     
@@ -50,7 +36,9 @@ const Friend = () => {
         });
 
         const accepted = response.data.acceptedFriends || [];
+        const pending = response.data.pendingRequests || [];
         setFriends(accepted);
+        setRequests(pending)
       } catch (error) {
         console.error('Lỗi khi lấy lời mời:', error);
       } finally {
@@ -82,24 +70,34 @@ const Friend = () => {
     </Pressable>
   );
 
-  const renderFriend = ({ item }) => (
-    <TouchableOpacity onPress={() => router.push("(main)/ChatScreen")} style={{ flexDirection: "row", alignItems: 'center', padding: 15, justifyContent: 'space-between' }}>
-      <View style={styles.friendItem}>
-        <View style={styles.avatar}>
-          <Image source={{ uri: item.avatarURL }} style={styles.avatar} />
+  const renderFriend = ({ item }) => {
+    console.log("jkbkb: ", item);
+    
+    return (
+      <TouchableOpacity onPress={() => router.push({
+        pathname: "(main)/ChatScreen",
+        params: {
+          conversation: null,
+          otherUser: JSON.stringify(item),
+        },
+      })} style={{ flexDirection: "row", alignItems: 'center', padding: 15, justifyContent: 'space-between' }}>
+        <View style={styles.friendItem}>
+          <View style={styles.avatar}>
+            <Image source={{ uri: item.avatarURL }} style={styles.avatar} />
+          </View>
+          <Text style={styles.friendName}>{item.username}</Text>
         </View>
-        <Text style={styles.friendName}>{item.username}</Text>
-      </View>
-      <View style={{ flexDirection: "row", gap: 20 }}>
-        <TouchableOpacity>
-          <Ionicons name="call-outline" size={25}/>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="videocam-outline" size={28}/>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
+        <View style={{ flexDirection: "row", gap: 20 }}>
+          <TouchableOpacity>
+            <Ionicons name="call-outline" size={25}/>
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Ionicons name="videocam-outline" size={28}/>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    )
+  }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
@@ -109,7 +107,7 @@ const Friend = () => {
             <FontAwesome6 name="user-group" size={18} color="#fff" />
           </View>
           <View>
-            <Text style={styles.itemName}>Lời mới kết bạn</Text>
+            <Text style={styles.itemName}>Lời mới kết bạn ({requests.length})</Text>
           </View>
         </View>
       </Pressable>
