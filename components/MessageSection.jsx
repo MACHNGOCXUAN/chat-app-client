@@ -148,11 +148,12 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
     <View style={styles.container}>
       {messages.map((message) => {
         const isSentByMe = message.senderId._id === currentUserId;
+        
 
         return (
           <Pressable
             onLongPress={() => showMessageActions(message)}
-            key={message._id}
+            key={message?._id}
             style={[
               styles.messageContainer,
               isSentByMe ? styles.sentMessage : styles.receivedMessage,

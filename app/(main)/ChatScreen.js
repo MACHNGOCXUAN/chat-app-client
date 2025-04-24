@@ -44,7 +44,7 @@ const ChatScreen = () => {
     if (!socket || !user?._id) return;
 
     // Nếu là chat 1-1
-    if (otherUser?._id) {
+    if (otherUser?._id && !conversation) {
       socket.emit("join_conversation", {
         senderId: user._id,
         receiveId: otherUser._id,
@@ -64,6 +64,8 @@ const ChatScreen = () => {
     // Lắng nghe sự kiện khi join room thành công
     socket.on("joined_room", (data) => {
       if (data.conversationId) {
+        console.log("kbk: ", data);
+        
         setConversationId(data.conversationId);
       }
     });
