@@ -23,7 +23,7 @@ const ChatScreen = () => {
   const { user } = useSelector((state) => state.auth);
   const params = useLocalSearchParams();
   const conversation = params.conversation ? JSON.parse(params.conversation) : null
-  
+
   const [conversationId, setConversationId] = useState(conversation?._id || null);
   const otherUser = params.otherUser ? JSON.parse(params.otherUser) : null;
   const [messages, setMessages] = useState([]);
@@ -65,7 +65,7 @@ const ChatScreen = () => {
     socket.on("joined_room", (data) => {
       if (data.conversationId) {
         console.log("kbk: ", data);
-        
+
         setConversationId(data.conversationId);
       }
     });
@@ -80,14 +80,14 @@ const ChatScreen = () => {
       socket.off("conversation_created");
     };
   }, [otherUser, conversationId, user]);
-  
+
 
   // Trong ChatScreen.js
   const handleSendMessage = async (messageContent) => {
     if (user?._id && socket) {
-      
+
       if (messageContent.type === "text") {
-        
+
         socket.emit("sendMessage", {
           conversationId,
           senderId: user._id,

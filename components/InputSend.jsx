@@ -19,7 +19,7 @@ const InputSend = ({ onSend }) => {
   const [image, setImage] = useState([]);
   const [imageURI, setImageURI] = useState([]);
   const inputRef = useRef();
-  
+
 
   const pickAvatar = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({

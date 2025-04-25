@@ -19,14 +19,14 @@ import { useSelector } from "react-redux";
 
 const Friend = () => {
 
-  const {accessToken, user} = useSelector(state => state.auth)
+  const { accessToken, user } = useSelector(state => state.auth)
 
   const [friends, setFriends] = useState([]);
   const [requests, setRequests] = useState([])
-  
+
 
   useEffect(() => {
-    
+
     const fetchRequests = async () => {
       try {
         const response = await axiosInstance.get('/api/friend/friends', {
@@ -72,7 +72,7 @@ const Friend = () => {
 
   const renderFriend = ({ item }) => {
     console.log("jkbkb: ", item);
-    
+
     return (
       <TouchableOpacity onPress={() => router.push({
         pathname: "(main)/ChatScreen",
@@ -89,10 +89,10 @@ const Friend = () => {
         </View>
         <View style={{ flexDirection: "row", gap: 20 }}>
           <TouchableOpacity>
-            <Ionicons name="call-outline" size={25}/>
+            <Ionicons name="call-outline" size={25} />
           </TouchableOpacity>
           <TouchableOpacity>
-            <Ionicons name="videocam-outline" size={28}/>
+            <Ionicons name="videocam-outline" size={28} />
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -137,12 +137,12 @@ const Friend = () => {
 
       <View style={styles.tabBar}>
         {
-          tabs.map((tab)=>(
+          tabs.map((tab) => (
             <TouchableOpacity key={tab.id} activeOpacity={1} style={[
               styles.tabBarItem,
               active === tab.id && styles.selectedTabBarItem
-            ]} 
-            onPress={() => setActive(tab.id)}>
+            ]}
+              onPress={() => setActive(tab.id)}>
               <Text>{tab.label}</Text>
             </TouchableOpacity>
           ))
@@ -151,7 +151,7 @@ const Friend = () => {
 
       <FlatList
         data={friends}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
         renderItem={renderFriend}
         scrollEnabled={false}
       />
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   },
   selectedTabBarItem: {
     backgroundColor: 'gray',
-    opacity:0.7,
+    opacity: 0.7,
     color: '#333'
   },
   item: {

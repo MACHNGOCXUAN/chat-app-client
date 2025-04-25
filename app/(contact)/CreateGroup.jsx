@@ -43,10 +43,11 @@ const CreateGroup = () => {
         });
 
         const accepted = response.data.acceptedFriends || [];
-        const formattedMembers = accepted.map((friend) => ({
-          _id: friend._id,
+        const formattedMembers = accepted.map((friend, index) => ({
+          _id: friend._id || `temp-id-${index}`,
           username: friend.username,
           avatarURL: friend.avatarURL ? { uri: friend.avatarURL } : avatar,
+          uniqueId: `friend-${index}-${Date.now()}`
         }));
         setMembers(formattedMembers);
       } catch (error) {
@@ -63,7 +64,7 @@ const CreateGroup = () => {
       setIsCreating(false);
       router.push({
         pathname: "/(main)/ChatScreen",
-        params: { 
+        params: {
           conversation: JSON.stringify(conversation)
         }
       })
@@ -86,15 +87,15 @@ const CreateGroup = () => {
 
   const toggleSelect = (contact) => {
     setSelectedContacts((prev) =>
-      prev.some((c) => c._id === contact._id)
-        ? prev.filter((c) => c._id !== contact._id)
+      prev.some((c) => c.uniqueId === contact.uniqueId)
+        ? prev.filter((c) => c.uniqueId !== contact.uniqueId)
         : [...prev, contact]
     );
   };
 
   const handleCreateGroup = async () => {
     if (isCreating) return;
-    
+
     if (!groupName.trim()) {
       Alert.alert("Error", "Please enter group name");
       return;
@@ -106,7 +107,7 @@ const CreateGroup = () => {
     }
 
     setIsCreating(true);
-    const memberIds = selectedContacts.map((contact) => contact._id);
+    const memberIds = selectedContacts.map((contact) => contact._id.startsWith('temp-id-') ? null : contact._id).filter(Boolean);
 
     try {
       if (selectedImage) {
@@ -155,7 +156,7 @@ const CreateGroup = () => {
 
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
+
     if (!permissionResult.granted) {
       Alert.alert("Permission required", "Need camera roll permission to select images");
       return;
@@ -232,16 +233,15 @@ const CreateGroup = () => {
 
         <FlatList
           data={filteredMembers}
-          keyExtractor={(item) => item._id}
+          keyExtractor={(item, index) => `member-${item._id}-${index}`}
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => toggleSelect(item)}
               className="h-16 flex-row items-center my-1"
             >
-              <View className={`w-7 h-7 rounded-full border-2 border-blue-200 mr-3 justify-center items-center ${
-                selectedContacts.some((c) => c._id === item._id) ? "bg-blue-500" : "bg-transparent"
-              }`}>
-                {selectedContacts.some((c) => c._id === item._id) && (
+              <View className={`w-7 h-7 rounded-full border-2 border-blue-200 mr-3 justify-center items-center ${selectedContacts.some((c) => c.uniqueId === item.uniqueId) ? "bg-blue-500" : "bg-transparent"
+                }`}>
+                {selectedContacts.some((c) => c.uniqueId === item.uniqueId) && (
                   <Ionicons name="checkmark" size={16} color="white" />
                 )}
               </View>
@@ -262,8 +262,8 @@ const CreateGroup = () => {
             showsHorizontalScrollIndicator={false}
             className="flex-1 mr-3"
           >
-            {selectedContacts.map((contact) => (
-              <View key={contact._id} className="mr-2">
+            {selectedContacts.map((contact, index) => (
+              <View key={contact.uniqueId || `selected-${index}`} className="mr-2">
                 <Image
                   source={contact.avatarURL}
                   className="w-12 h-12 rounded-full"
@@ -271,16 +271,16 @@ const CreateGroup = () => {
               </View>
             ))}
           </ScrollView>
-          
+
           <TouchableOpacity
             onPress={handleCreateGroup}
             disabled={isCreating}
             className="bg-blue-600 p-3 rounded-full"
           >
-            <MaterialIcons 
-              name="send" 
-              size={24} 
-              color="white" 
+            <MaterialIcons
+              name="send"
+              size={24}
+              color="white"
             />
           </TouchableOpacity>
         </View>

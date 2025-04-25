@@ -35,12 +35,12 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
         setMessages(response.data.data);
       } catch (error) {
         console.log("Failed to fetch messages:", error);
-        
+
       }
     };
 
     if (conversationId) {
-      
+
       fetchMessageConversation(conversationId);
     }
   }, [conversationId]);
@@ -64,7 +64,7 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
         )
       );
     };
-    
+
 
     socket.on("message_sent", handleNewMessage);
     socket.on("receive_message", handleNewMessage);
@@ -85,7 +85,7 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
   };
 
   const showMessageActions = (message) => {
-    
+
     const options = ["Chuyển tiếp"];
     if (message.senderId._id === currentUserId) options.push("Thu hồi");
     options.push("Hủy");
@@ -114,11 +114,11 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
       Alert.alert("Hành động", "Chọn thao tác", [
         ...(message.senderId._id === currentUserId
           ? [
-              {
-                text: "Thu hồi",
-                onPress: () => handleRecallMessage(message._id),
-              },
-            ]
+            {
+              text: "Thu hồi",
+              onPress: () => handleRecallMessage(message._id),
+            },
+          ]
           : []),
         {
           text: "Chuyển tiếp",
@@ -135,12 +135,12 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
 
   const renderImages = (images) => {
     if (!Array.isArray(images)) images = [images]; // Đảm bảo luôn là mảng
-    
+
     return (
-      <View className = 'grid grid-cols-2 gap-1'>
-        {images.map((uri) => (
+      <View className='grid grid-cols-2 gap-1'>
+        {images.map((uri, index) => (
           <Image
-            key={uri}
+            key={`${uri}-${index}`}
             source={{ uri }}
             style={[
               styles.messageImage,
@@ -155,14 +155,13 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
 
   return (
     <View style={styles.container}>
-      {messages.map((message) => {
+      {messages.map((message, index) => {
         const isSentByMe = message.senderId._id === currentUserId;
-        
 
         return (
           <Pressable
             onLongPress={() => showMessageActions(message)}
-            key={message?._id}
+            key={`${message?._id}-${index}`}
             style={[
               styles.messageContainer,
               isSentByMe ? styles.sentMessage : styles.receivedMessage,
@@ -322,7 +321,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     flexShrink: 1,
   },
-  
+
   // Thêm style cho video preview nếu cần
   videoContainer: {
     position: 'relative',
