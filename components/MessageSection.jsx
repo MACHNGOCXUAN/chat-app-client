@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { useSelector } from "react-redux";
 import axiosInstance from "../utils/axiosInstance";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import socket from "../utils/socket";
 
 const MessageSection = ({ conversationId, messages, setMessages }) => {
@@ -85,6 +85,7 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
   };
 
   const showMessageActions = (message) => {
+    
     const options = ["Chuyển tiếp"];
     if (message.senderId._id === currentUserId) options.push("Thu hồi");
     options.push("Hủy");
@@ -100,8 +101,12 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
           if (options[buttonIndex] === "Thu hồi") {
             handleRecallMessage(message._id);
           } else if (options[buttonIndex] === "Chuyển tiếp") {
-            // handleForwardMessage(message);
-            alert("Bạn chuyển tiếp tin nhắn!");
+            router.push({
+              pathname: "/(main)/ForwardMessage",
+              params: {
+                message: JSON.stringify(message),
+              }
+            })
           }
         }
       );
@@ -117,7 +122,11 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
           : []),
         {
           text: "Chuyển tiếp",
-          onPress: () => alert("Bạn chuyển tiếp tin nhắn!"),
+          onPress: () => {
+            router.push({
+              pathname: "/(main)/ForwardMessage",
+            })
+          },
         },
         { text: "Hủy", style: "cancel" },
       ]);

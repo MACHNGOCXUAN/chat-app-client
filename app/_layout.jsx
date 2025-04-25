@@ -228,11 +228,43 @@ export default function RootLayout() {
                       color: appColors.white,
                     }}
                   >
-                    { conversation?.type === "group"  ? conversation?.name : otherUser?.username }
+                    {conversation?.type === "group"
+                      ? conversation?.name
+                      : otherUser?.username}
                   </Text>
                 </View>
               );
             },
+          })}
+        />
+
+        <Stack.Screen
+          name="(main)/ForwardMessage"
+          options={({ navigation }) => ({
+            title: "",
+            headerShown: true,
+            headerStyle: { backgroundColor: appColors.primary },
+            headerLeft: () => (
+              <View
+                style={{ flexDirection: "row", gap: 20, alignItems: "center" }}
+              >
+                <MaterialIcons
+                  color={appColors.white}
+                  onPress={() => navigation.goBack()}
+                  name="west"
+                  size={25}
+                />
+                <Text
+                  style={{
+                    fontWeight: "600",
+                    fontSize: 18,
+                    color: appColors.white,
+                  }}
+                >
+                  Chuyển tiếp
+                </Text>
+              </View>
+            ),
           })}
         />
       </Stack>

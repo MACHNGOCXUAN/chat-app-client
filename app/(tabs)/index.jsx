@@ -112,6 +112,9 @@ const message = ({ navigation }) => {
     
     socket.on("joined_room", handleJoinedConversation);
     socket.on("conversation_updated", handleConversationUpdate);
+    socket.on("forwardConversation", ()=>{
+      fetchConversation()
+    })
     socket.on("group_created", () => {
       fetchConversation()
     });
