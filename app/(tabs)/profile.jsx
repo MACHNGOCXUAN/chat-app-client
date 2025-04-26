@@ -143,21 +143,21 @@ export default function MeScreen() {
 
   const handleLogoutAll = () => {
     Alert.prompt(
-          'Đăng xuất ra khỏi các thiết bị khác',
-          'Nhập mật khẩu hiện tại của bạn để đăng xuất ra khỏi các thiết bị khác',
-          [
-            {
-              text: 'Không',
-            },
-            {
-              text: 'Có',
-              onPress: async password => {
-                console.log('Đã đăng xuất khỏi tất cả thiết bị');
-              },
-            },
-          ],
-          'secure-text',
-        );
+      'Đăng xuất ra khỏi các thiết bị khác',
+      'Nhập mật khẩu hiện tại của bạn để đăng xuất ra khỏi các thiết bị khác',
+      [
+        {
+          text: 'Không',
+        },
+        {
+          text: 'Có',
+          onPress: async password => {
+            console.log('Đã đăng xuất khỏi tất cả thiết bị');
+          },
+        },
+      ],
+      'secure-text',
+    );
     // setIsLogoutAll(true);
   };
 
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
   container: {
     // backgroundColor: '#E2E9F1',
     backgroundColor: "#fff",
-    flex:1
+    flex: 1
   },
   header: {},
   action: {

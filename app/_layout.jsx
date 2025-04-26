@@ -1,5 +1,5 @@
 import { useFonts } from "expo-font";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, router } from "expo-router";
 import { useEffect, useState } from "react";
 import "react-native-reanimated";
 import "./global.css";
@@ -227,6 +227,17 @@ export default function RootLayout() {
                       fontSize: 18,
                       color: appColors.white,
                     }}
+                    onPress={() => {
+                      if (conversation?.type === "group") {
+                        // Sử dụng router.push với cú pháp đúng
+                        router.push({
+                          pathname: "(main)/GroupDetail",
+                          params: {
+                            conversation: route.params.conversation,
+                          },
+                        });
+                      }
+                    }}
                   >
                     {conversation?.type === "group"
                       ? conversation?.name
@@ -266,6 +277,80 @@ export default function RootLayout() {
               </View>
             ),
           })}
+        />
+
+        <Stack.Screen
+          name="(main)/GroupDetail"
+          options={({ navigation }) => ({
+            title: "",
+            headerShown: true,
+            headerStyle: { backgroundColor: appColors.primary },
+            headerLeft: () => (
+              <View
+                style={{ flexDirection: "row", gap: 20, alignItems: "center" }}
+              >
+                <MaterialIcons
+                  color={appColors.white}
+                  onPress={() => navigation.goBack()}
+                  name="west"
+                  size={25}
+                />
+                <Text
+                  style={{
+                    fontWeight: "600",
+                    fontSize: 18,
+                    color: appColors.white,
+                  }}
+                >
+                  Chi tiết nhóm
+                </Text>
+              </View>
+            ),
+          })}
+        />
+
+        <Stack.Screen
+          name="(main)/SettingGroup"
+          options={({ navigation }) => ({
+            title: "",
+            headerShown: true,
+            headerStyle: { backgroundColor: appColors.primary },
+            headerLeft: () => (
+              <View
+                style={{ flexDirection: "row", gap: 20, alignItems: "center" }}
+              >
+                <MaterialIcons
+                  color={appColors.white}
+                  onPress={() => navigation.goBack()}
+                  name="west"
+                  size={25}
+                />
+                <Text
+                  style={{
+                    fontWeight: "600",
+                    fontSize: 18,
+                    color: appColors.white,
+                  }}
+                >
+                  Cài đặt nhóm
+                </Text>
+              </View>
+            ),
+          })}
+        />
+
+        <Stack.Screen
+          name="(contact)/AddGroupMember"
+          options={{
+            headerShown: false, // Ẩn header từ Stack Navigator
+          }}
+        />
+
+        <Stack.Screen
+          name="(contact)/ModelSetting"
+          options={{
+            headerShown: false, // Ẩn header từ Stack Navigator
+          }}
         />
       </Stack>
       <Toast />
