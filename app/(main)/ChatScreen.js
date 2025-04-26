@@ -163,7 +163,7 @@ const ChatScreen = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={90}
       >
-        <InputSend onSend={handleSendMessage} />
+        <InputSend onSend={handleSendMessage} conversation = {conversation}/>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

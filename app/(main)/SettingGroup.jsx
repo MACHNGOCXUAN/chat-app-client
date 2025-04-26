@@ -116,14 +116,70 @@ const SettingGroup = () => {
     setSelectedOption(currentPermissions[permission.id]);
   };
 
-  const handleSavePermission = () => {
-    if (currentPermission) {
-      setCurrentPermissions((prev) => ({
-        ...prev,
-        [currentPermission.id]: selectedOption,
-      }));
+  useEffect(() => {
+    const handleGroupSettingsUpdated = (data) => {
+      if (data.conversationId === conversation._id) {
+        if (data.setting === 'messagePermission') {
+          const frontendPermission = data.permission === 'admin' ? 'admins' : 'all';
+          setCurrentPermissions(prev => ({
+            ...prev,
+            send_message: frontendPermission
+          }));
+        }
+        // Thêm các trường hợp khác nếu cần
+      }
+    };
+  
+    socket.on('group_settings_updated', handleGroupSettingsUpdated);
+  
+    return () => {
+      socket.off('group_settings_updated', handleGroupSettingsUpdated);
+    };
+  }, [conversation?._id]);
+
+  const handleSavePermission = async () => {
+    try {
+      if (!currentPermission) return;
+
+      const permissionMap = {
+        all: "all",
+        admins: "admin",
+      };
+
+      const backendPermission = permissionMap[selectedOption];
+      const backendSetting =
+        currentPermission.id === "send_message" ? "messagePermission" : null;
+
+      if (!backendSetting) return;
+
+      const response = await axiosInstance.put(
+        "/api/conversation/updatePermission",
+        {
+          conversationId: conversation._id,
+          setting: backendSetting,
+          permission: backendPermission,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setCurrentPermissions((prev) => ({
+          ...prev,
+          [currentPermission.id]: selectedOption,
+        }));
+
+        Alert.alert("Thành công", "Đã cập nhật quyền thành công");
+      }
+    } catch (error) {
+      console.error("Lỗi khi cập nhật quyền:", error);
+      Alert.alert("Lỗi", "Có lỗi xảy ra khi cập nhật quyền");
+    } finally {
+      setIsPermissionModalVisible(false);
     }
-    setIsPermissionModalVisible(false);
   };
 
   const getPermissionText = (permissionId, optionId) => {

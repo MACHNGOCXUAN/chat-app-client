@@ -7,18 +7,23 @@ import {
   Platform,
   Keyboard,
   Image,
+  Text,
+  Pressable,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import EmojiSelector from "react-native-emoji-selector";
 import * as ImagePicker from "expo-image-picker";
+import { appColors } from "../constants/appColor";
+import { useSelector } from "react-redux";
 
-const InputSend = ({ onSend }) => {
+const InputSend = ({ onSend, conversation }) => {
   const [message, setMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   // const [image, setImage] = useState(null);
   const [image, setImage] = useState([]);
   const [imageURI, setImageURI] = useState([]);
   const inputRef = useRef();
+  const { user } = useSelector((state) => state.auth);
 
 
   const pickAvatar = async () => {
@@ -87,6 +92,23 @@ const InputSend = ({ onSend }) => {
   const handleRemoveImage = (index) => {
     setImage((prev) => prev.filter((_, i) => i !== index));
   };
+
+  const quyenNhanTin = conversation?.settings?.messagePermission
+
+  console.log(user);
+  
+
+  const userQuyen = conversation?.members?.find(member => member.userId._id === user._id)
+  
+
+  if(quyenNhanTin === "admin" && userQuyen?.role === "member") {
+    return (
+      <View className = "flex justify-center items-center">
+        <Text>Chỉ <Text style={{color: appColors.primary}}>trưởng nhóm/phó nhóm</Text> được gửi tin nhắn vào nhóm</Text>
+      </View>
+    )
+  }
+  
 
   return (
     <>

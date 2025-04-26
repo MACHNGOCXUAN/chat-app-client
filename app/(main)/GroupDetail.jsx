@@ -832,6 +832,22 @@ const GroupDetail = () => {
                         )
                     }
 
+{
+                        isAdmin && (
+                            <TouchableOpacity style={styles.optionItem} onPress = {() => {
+                                router.push({
+                                    pathname: "(main)/SettingGroup",
+                                    params: {
+                                      conversation: JSON.stringify(conversation),
+                                    },
+                                  });
+                            }} >
+                                <Ionicons name="settings" size={24} color="#297EFF" />
+                                <Text style={styles.optionText}>Chuyển quyền trưởng nhóm</Text>
+                            </TouchableOpacity>
+                        )
+                    }
+
                     <TouchableOpacity style={styles.optionItem} onPress={handleRenameGroup}>
                         <Entypo name="info-with-circle" size={24} color="#297EFF" />
                         <Text style={styles.optionText}>Đổi tên nhóm</Text>
