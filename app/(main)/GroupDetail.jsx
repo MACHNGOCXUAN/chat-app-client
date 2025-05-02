@@ -645,7 +645,7 @@ const GroupDetail = () => {
         }
     };
 
-    const handleDeleteGroup = () => {
+    const handleDeleteGroup = async () => {
         if (!isAdmin) {
             Alert.alert('Thông báo', 'Chỉ quản trị viên mới có thể giải tán nhóm');
             return;
@@ -659,19 +659,55 @@ const GroupDetail = () => {
                 {
                     text: 'Giải tán',
                     style: 'destructive',
-                    onPress: () => {
-                        socket.emit('delete_conversation', {
-                            conversationId: conversation._id,
-                            userId: user._id
-                        });
+                    onPress: async () => {
+                        try {
+                            const response = await axiosInstance.post('/api/conversation/groupDisbanded', {
+                                conversationId: conversation._id,
+                            }, {
+                                headers: {
+                                    Authorization: `Bearer ${accessToken}`,
+                                },
+                            });
 
-                        Alert.alert('Thành công', 'Đã giải tán nhóm');
-                        router.back();
+                            if (response.data.success) {
+                                Alert.alert('Thành công', 'Đã giải tán nhóm');
+                                router.back();
+                            } else {
+                                Alert.alert('Lỗi', response.data.message);
+                            }
+                        } catch (error) {
+                            console.error('Error disbanding group:', error);
+                            Alert.alert('Lỗi', 'Không thể giải tán nhóm');
+                        }
                     }
                 }
             ]
         );
     };
+
+    // Thêm useEffect để lắng nghe sự kiện giải tán nhóm
+    useEffect(() => {
+        // Lắng nghe sự kiện nhóm bị giải tán
+        socket.on('group_disbanded', ({ conversationId, message }) => {
+            if (conversationId === conversation._id) {
+                Alert.alert('Thông báo', message || 'Nhóm đã bị giải tán bởi quản trị viên');
+                router.back();
+            }
+        });
+
+        // Lắng nghe sự kiện bị đuổi khỏi nhóm
+        socket.on('removed_from_group', ({ conversationId, message }) => {
+            if (conversationId === conversation._id) {
+                Alert.alert('Thông báo', message || 'Nhóm đã bị giải tán bởi quản trị viên');
+                router.back();
+            }
+        });
+
+        return () => {
+            socket.off('group_disbanded');
+            socket.off('removed_from_group');
+        };
+    }, [conversation]);
 
     const renderMemberItem = ({ item }) => {
         // Kiểm tra giá trị trước khi so sánh để tránh lỗi
