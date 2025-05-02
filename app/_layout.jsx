@@ -3,17 +3,70 @@ import { Stack, useLocalSearchParams, router } from "expo-router";
 import { useEffect, useState } from "react";
 import "react-native-reanimated";
 import "./global.css";
-import { MaterialIcons } from "@expo/vector-icons";
-import { Text, View } from "react-native";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { Pressable, Text, View } from "react-native";
 import { Provider } from "react-redux";
 import { store } from "../stores/store";
 import { appColors } from "../constants/appColor";
 import Toast from "react-native-toast-message";
 import ChatScreen from "./(main)/ChatScreen";
+import socket from "../utils/socket";
 
 export default function RootLayout() {
   // const otherUser = params.otherUser ? JSON.parse(params.otherUser) : null;
   const [memberCount, setMemberCount] = useState(0);
+  const [onlineUsers, setOnlineUsers] = useState({});
+  const [lastOnline, setLastOnline] = useState({});
+
+
+  useEffect(() => {
+    // Lắng nghe sự kiện user-status
+    socket.on("user-status", ({ userId, isOnline, lastActive }) => {
+      setOnlineUsers(prev => ({
+        ...prev,
+        [userId]: isOnline
+      }));
+      
+      if (!isOnline && lastActive) {
+        setLastOnline(prev => ({
+          ...prev,
+          [userId]: lastActive
+        }));
+      }
+    });
+
+    return () => {
+      socket.off("user-status");
+    };
+  }, []);
+
+  const isUserOnline = (userId) => {
+    return onlineUsers[userId] || false;
+  };
+
+  const getStatusText = (user, conversation) => {
+    if (conversation?.type === "group") {
+      // Tính số thành viên online trong nhóm
+      const onlineCount = conversation.members?.filter(member => 
+        isUserOnline(member._id)
+      ).length || 0;
+      
+      return `${onlineCount}/${conversation.members.length} đang online`;
+    }
+    
+    if (isUserOnline(user?._id)) {
+      return "Đang hoạt động";
+    }
+    
+    if (lastOnline[user?._id]) {
+      return `Hoạt động ${dayjs(lastOnline[user?._id]).fromNow()}`;
+    }
+    
+    return "Vừa mới truy cập";
+  };
+
+
+
   return (
     <Provider store={store}>
       <Stack
@@ -45,7 +98,7 @@ export default function RootLayout() {
               </View>
             ),
           })}
-          // initialParams={{ setMemberCount }}
+        // initialParams={{ setMemberCount }}
         />
 
         <Stack.Screen
@@ -207,12 +260,16 @@ export default function RootLayout() {
                 ? JSON.parse(route.params.conversation)
                 : null;
 
+                const statusText = getStatusText(otherUser, conversation);
+
               return (
                 <View
+
                   style={{
                     flexDirection: "row",
                     gap: 20,
                     alignItems: "center",
+                    flex: 1
                   }}
                 >
                   <MaterialIcons
@@ -221,31 +278,54 @@ export default function RootLayout() {
                     name="west"
                     size={25}
                   />
-                  <Text
-                    style={{
-                      fontWeight: "600",
-                      fontSize: 18,
-                      color: appColors.white,
-                    }}
-                    onPress={() => {
-                      if (conversation?.type === "group") {
-                        // Sử dụng router.push với cú pháp đúng
-                        router.push({
-                          pathname: "(main)/GroupDetail",
-                          params: {
-                            conversation: route.params.conversation,
-                          },
-                        });
-                      }
-                    }}
-                  >
-                    {conversation?.type === "group"
-                      ? conversation?.name
-                      : otherUser?.username}
-                  </Text>
+                  <Pressable onPress={() => {
+                    if (conversation?.type === "group") {
+                      // Sử dụng router.push với cú pháp đúng
+                      router.push({
+                        pathname: "(main)/GroupDetail",
+                        params: {
+                          conversation: route.params.conversation,
+                        },
+                      });
+                    } else {
+                      router.push({
+                        pathname: "(contact)/UserDetail",
+                        params: {
+                          otherUser: route.params.otherUser,
+                        },
+                      });
+                    }
+                  }} className="flex-1 flex-col ">
+                    <Text
+                      style={{
+                        fontWeight: "600",
+                        fontSize: 18,
+                        color: appColors.white,
+                      }}
+                    >
+                      {conversation?.type === "group"
+                        ? conversation?.name
+                        : otherUser?.username}
+                    </Text>
+                    <Text className="text-sm text-gray-300">
+                      {statusText}
+                    </Text>
+                  </Pressable>
                 </View>
               );
             },
+            headerRight: () => {
+              return (
+                <View className="flex-row gap-5 items-center">
+                  <Pressable>
+                    <MaterialIcons name="phone" size={24} color="white" />
+                  </Pressable>
+                  <Pressable>
+                    <Ionicons name="videocam-outline" size={28} color="white" />
+                  </Pressable>
+                </View>
+              )
+            }
           })}
         />
 

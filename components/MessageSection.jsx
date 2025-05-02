@@ -9,6 +9,7 @@ import {
   Pressable,
   Platform,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useSelector } from "react-redux";
 import axiosInstance from "../utils/axiosInstance";
@@ -26,21 +27,26 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
 
   const currentUserId = user._id;
 
+  const fetchMessageConversation = async (conversationId) => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get(
+        `/api/message/${conversationId}`
+      );
+      // Sắp xếp messages theo timestamp
+      const sortedMessages = response.data.data.sort(
+        (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+      );
+      setMessages(sortedMessages);
+    } catch (error) {
+      console.log("Failed to fetch messages:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchMessageConversation = async (conversationId) => {
-      try {
-        const response = await axiosInstance.get(
-          `/api/message/${conversationId}`
-        );
-        setMessages(response.data.data);
-      } catch (error) {
-        console.log("Failed to fetch messages:", error);
-
-      }
-    };
-
     if (conversationId) {
-
       fetchMessageConversation(conversationId);
     }
   }, [conversationId]);
@@ -51,7 +57,13 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
         // Kiểm tra xem đã có tin nhắn này chưa (dựa vào _id)
         setMessages((prev) => {
           const exists = prev.some((msg) => msg._id === newMessage._id);
-          if (!exists) return [...prev, newMessage];
+          if (!exists) {
+            // Sắp xếp lại messages theo timestamp
+            const updatedMessages = [...prev, newMessage].sort(
+              (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+            );
+            return updatedMessages;
+          }
           return prev;
         });
       }
@@ -65,15 +77,23 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
       );
     };
 
+    const handleGroupSettingsUpdated = (data) => {
+      if (data.conversationId === conversationId) {
+        // Cập nhật lại messages khi có thay đổi quyền
+        fetchMessageConversation(conversationId);
+      }
+    };
 
     socket.on("message_sent", handleNewMessage);
     socket.on("receive_message", handleNewMessage);
     socket.on("message_recalled", handleRecallMessageUpdate);
+    socket.on("group_settings_updated", handleGroupSettingsUpdated);
 
     return () => {
       socket.off("message_sent", handleNewMessage);
       socket.off("receive_message", handleNewMessage);
       socket.off("message_recalled", handleRecallMessageUpdate);
+      socket.off("group_settings_updated", handleGroupSettingsUpdated);
     };
   }, [conversationId]);
 
@@ -153,70 +173,83 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
     );
   };
 
-  return (
-    <View style={styles.container}>
-      {messages.map((message, index) => {
-        const isSentByMe = message.senderId._id === currentUserId;
+  const renderMessage = (message, index) => {
+    const isSentByMe = message.senderId._id === currentUserId;
+    const isSystemMessage = message.messageType === "system";
 
-        return (
-          <Pressable
-            onLongPress={() => showMessageActions(message)}
-            key={`${message?._id}-${index}`}
-            style={[
-              styles.messageContainer,
-              isSentByMe ? styles.sentMessage : styles.receivedMessage,
-            ]}
-          >
-            {!isSentByMe && (
-              <View style={styles.avatarContainer}>
-                {message.senderId.avatarURL ? (
-                  <Image
-                    source={{ uri: message.senderId.avatarURL }}
-                    style={styles.avatar}
-                    onError={() =>
-                      console.log(
-                        "Error loading avatar for:",
-                        message.senderId.username
-                      )
-                    }
-                  />
-                ) : (
-                  <Text style={styles.avatarText}>
-                    {message.senderId.username.charAt(0).toUpperCase()}
-                  </Text>
-                )}
-              </View>
+    if (isSystemMessage) {
+      return (
+        <View key={`${message._id}-${index}`} style={styles.systemMessageContainer}>
+          <Text style={styles.systemMessageText}>{message.content}</Text>
+        </View>
+      );
+    }
+
+    return (
+      <Pressable
+        onLongPress={() => showMessageActions(message)}
+        key={`${message._id}-${index}`}
+        style={[
+          styles.messageContainer,
+          isSentByMe ? styles.sentMessage : styles.receivedMessage,
+        ]}
+      >
+        {!isSentByMe && (
+          <View style={styles.avatarContainer}>
+            {message.senderId.avatarURL ? (
+              <Image
+                source={{ uri: message.senderId.avatarURL }}
+                style={styles.avatar}
+                onError={() =>
+                  console.log(
+                    "Error loading avatar for:",
+                    message.senderId.username
+                  )
+                }
+              />
+            ) : (
+              <Text style={styles.avatarText}>
+                {message.senderId.username.charAt(0).toUpperCase()}
+              </Text>
             )}
-            <View
+          </View>
+        )}
+        <View
+          style={[
+            styles.messageBubble,
+            isSentByMe ? styles.sentBubble : styles.receivedBubble,
+          ]}
+        >
+          {message.messageType === "text" ? (
+            <Text
               style={[
-                styles.messageBubble,
-                isSentByMe ? styles.sentBubble : styles.receivedBubble,
+                styles.messageText,
+                isSentByMe ? styles.sentMessageText : styles.receivedMessageText,
               ]}
             >
-              {message.messageType === "text" ? (
-                <Text
-                  style={[
-                    styles.messageText,
-                    isSentByMe && styles.sentMessageText,
-                  ]}
-                >
-                  {message.content}
-                </Text>
-              ) : (
-                renderImages(message.content)
-              )}
-              <Text
-                style={[styles.timestamp, isSentByMe && styles.sentTimestamp]}
-              >
-                {new Date(message.timestamp).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </Text>
-            </View>
-          </Pressable>
-        );
-      })}
+              {message.content}
+            </Text>
+          ) : (
+            renderImages(message.content)
+          )}
+          <Text style={styles.timestamp}>
+            {new Date(message.timestamp).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </Text>
+        </View>
+      </Pressable>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {loading ? (
+        <ActivityIndicator size="large" color="#007AFF" />
+      ) : (
+        messages.map((message, index) => renderMessage(message, index))
+      )}
     </View>
   );
 };
@@ -275,6 +308,9 @@ const styles = StyleSheet.create({
   },
   sentMessageText: {
     color: "#fff",
+  },
+  receivedMessageText: {
+    color: "#666",
   },
   timestamp: {
     fontSize: 10,
@@ -337,6 +373,18 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  systemMessageContainer: {
+    alignItems: "center",
+    marginVertical: 8,
+  },
+  systemMessageText: {
+    backgroundColor: "rgba(0,0,0,0.1)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    color: "#666",
+    fontSize: 12,
   },
 });
 

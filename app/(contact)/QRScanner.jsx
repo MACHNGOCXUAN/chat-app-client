@@ -1,11 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Text, View, TouchableOpacity, StyleSheet, Button, Linking, Animated } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { MaterialIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { appColors } from '../../constants/appColor';
+
+const { width } = Dimensions.get('window');
+const SCANNER_SIZE = width * 0.7;
 
 const QRScanner = () => {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [facing, setFacing] = useState('back');
+  const [flashMode, setFlashMode] = useState('off');
   const [animation] = useState(new Animated.Value(0));
 
   useEffect(() => {
@@ -45,69 +52,74 @@ const QRScanner = () => {
 
   const handleBarCodeScanned = ({ type, data }) => {
     setScanned(true);
-    
-    // Kiểm tra nếu là URL thì mở trình duyệt
-    if (data.startsWith('http://') || data.startsWith('https://')) {
-      Linking.openURL(data).catch(err => 
-        alert('Không thể mở liên kết: ' + err.message)
-      );
-    } 
-    // Xử lý các loại QR code khác (như thêm bạn bè, thanh toán, v.v.)
-    else {
-      alert(`Đã quét mã QR: ${data}`);
-    }
+    // Xử lý dữ liệu quét được
+    console.log(`Bar code with type ${type} and data ${data} has been scanned!`);
   };
 
   const toggleCameraFacing = () => {
     setFacing((current) => (current === 'back' ? 'front' : 'back'));
   };
 
+  const toggleFlash = () => {
+    setFlashMode((current) => (current === 'off' ? 'torch' : 'off'));
+  };
+
   const translateY = animation.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 200],
+    outputRange: [0, SCANNER_SIZE],
   });
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <MaterialIcons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Quét mã QR</Text>
+        <View style={styles.rightButton} />
+      </View>
+
       <CameraView
         style={styles.camera}
         facing={facing}
+        flashMode={flashMode}
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
       >
         <View style={styles.overlay}>
-          <View style={styles.unfocusedArea} />
-          <View style={styles.middleArea}>
-            <View style={styles.unfocusedArea} />
-            <View style={styles.focusedArea}>
+          <View style={styles.scannerContainer}>
+            <View style={styles.scannerFrame}>
+              <View style={styles.cornerTopLeft} />
+              <View style={styles.cornerTopRight} />
+              <View style={styles.cornerBottomLeft} />
+              <View style={styles.cornerBottomRight} />
               <Animated.View 
                 style={[styles.scanLine, { transform: [{ translateY }] }]} 
               />
             </View>
-            <View style={styles.unfocusedArea} />
+            <Text style={styles.scannerText}>Đặt mã QR vào khung để quét</Text>
           </View>
-          <View style={styles.unfocusedArea} />
-        </View>
-        
-        <Text style={styles.helpText}>Đưa mã QR vào khung để quét</Text>
-        
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
-            <Text style={styles.flipButtonText}>Đổi camera</Text>
-          </TouchableOpacity>
         </View>
       </CameraView>
-      
-      {scanned && (
-        <View style={styles.rescanButton}>
-          <Button 
-            title="Quét lại" 
-            onPress={() => {
-              setScanned(false);
-              startAnimation();
-            }} 
+
+      <View style={styles.bottomContainer}>
+        <TouchableOpacity 
+          style={styles.flashButton}
+          onPress={toggleFlash}
+        >
+          <MaterialIcons 
+            name={flashMode === 'off' ? "flash-off" : "flash-on"} 
+            size={24} 
+            color="white" 
           />
-        </View>
-      )}
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.galleryButton}
+          onPress={() => console.log("Open gallery")}
+        >
+          <MaterialIcons name="photo-library" size={24} color="white" />
+          <Text style={styles.galleryText}>Chọn ảnh từ thư viện</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -115,71 +127,120 @@ const QRScanner = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: 'black',
   },
-  message: {
-    textAlign: 'center',
-    paddingBottom: 10,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 50,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  rightButton: {
+    width: 40,
   },
   camera: {
     flex: 1,
   },
   overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scannerContainer: {
+    alignItems: 'center',
+  },
+  scannerFrame: {
+    width: SCANNER_SIZE,
+    height: SCANNER_SIZE,
+    borderWidth: 1,
+    borderColor: 'white',
+    position: 'relative',
+  },
+  cornerTopLeft: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 30,
+    height: 30,
+    borderLeftWidth: 3,
+    borderTopWidth: 3,
+    borderColor: appColors.primary,
+  },
+  cornerTopRight: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 30,
+    height: 30,
+    borderRightWidth: 3,
+    borderTopWidth: 3,
+    borderColor: appColors.primary,
+  },
+  cornerBottomLeft: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: 30,
+    height: 30,
+    borderLeftWidth: 3,
+    borderBottomWidth: 3,
+    borderColor: appColors.primary,
+  },
+  cornerBottomRight: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 30,
+    height: 30,
+    borderRightWidth: 3,
+    borderBottomWidth: 3,
+    borderColor: appColors.primary,
+  },
+  scanLine: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    bottom: 0,
-  },
-  unfocusedArea: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-  },
-  middleArea: {
-    flexDirection: 'row',
-    flex: 1.5,
-  },
-  focusedArea: {
-    flex: 8,
-    borderColor: 'white',
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scanLine: {
     height: 2,
-    width: '100%',
-    backgroundColor: 'red',
+    backgroundColor: appColors.primary,
   },
-  helpText: {
+  scannerText: {
     color: 'white',
-    textAlign: 'center',
     marginTop: 20,
     fontSize: 16,
-    backgroundColor: 'transparent',
   },
-  buttonContainer: {
+  bottomContainer: {
     position: 'absolute',
     bottom: 40,
     left: 0,
     right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     alignItems: 'center',
   },
-  flipButton: {
-    padding: 15,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 10,
+  flashButton: {
+    padding: 16,
   },
-  flipButtonText: {
+  galleryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  galleryText: {
     color: 'white',
+    marginLeft: 8,
     fontSize: 16,
-  },
-  rescanButton: {
-    position: 'absolute',
-    bottom: 20,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 50,
   },
 });
 

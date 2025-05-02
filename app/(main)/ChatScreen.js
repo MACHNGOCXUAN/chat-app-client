@@ -9,10 +9,11 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import InputSend from "../../components/InputSend";
 import MessageSection from "../../components/MessageSection";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, router } from "expo-router";
 import socket from "../../utils/socket";
 import { useSelector } from "react-redux";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -22,23 +23,18 @@ import axiosInstance from "../../utils/axiosInstance";
 const ChatScreen = () => {
   const { user } = useSelector((state) => state.auth);
   const params = useLocalSearchParams();
-  const conversation = params.conversation ? JSON.parse(params.conversation) : null
-
+  const conversation = params.conversation ? JSON.parse(params.conversation) : null;
   const [conversationId, setConversationId] = useState(conversation?._id || null);
   const otherUser = params.otherUser ? JSON.parse(params.otherUser) : null;
   const [messages, setMessages] = useState([]);
-  // const [otherUser, setOtherUser] = useState(null);
+  const [isGroupDisbanded, setIsGroupDisbanded] = useState(false);
 
-  // useEffect(() => {
-  //   if (params.otherUser) {
-  //     try {
-  //       const parsed = JSON.parse(params.otherUser);
-  //       setOtherUser(parsed);
-  //     } catch (e) {
-  //       console.error("Invalid JSON for otherUser", e);
-  //     }
-  //   }
-  // }, [params.otherUser]);
+  useEffect(() => {
+    if (conversation && conversation.type === 'group') {
+      // Kiểm tra trạng thái nhóm
+      setIsGroupDisbanded(!conversation.isActive);
+    }
+  }, [conversation]);
 
   useEffect(() => {
     if (!socket || !user?._id) return;
@@ -64,8 +60,6 @@ const ChatScreen = () => {
     // Lắng nghe sự kiện khi join room thành công
     socket.on("joined_room", (data) => {
       if (data.conversationId) {
-        console.log("kbk: ", data);
-
         setConversationId(data.conversationId);
       }
     });
@@ -75,19 +69,30 @@ const ChatScreen = () => {
       setConversationId(newConversationId);
     });
 
+    // Lắng nghe sự kiện nhóm bị giải tán
+    socket.on('group_disbanded', ({ conversationId: disbandedId, message }) => {
+      if (disbandedId === conversationId) {
+        setIsGroupDisbanded(true);
+        Alert.alert('Thông báo', message || 'Nhóm đã bị giải tán bởi quản trị viên');
+        router.back();
+      }
+    });
+
     return () => {
       socket.off("joined_room");
       socket.off("conversation_created");
+      socket.off('group_disbanded');
     };
-  }, [otherUser, conversationId, user]);
+  }, [otherUser, conversationId, user, conversation]);
 
-
-  // Trong ChatScreen.js
   const handleSendMessage = async (messageContent) => {
+    if (isGroupDisbanded) {
+      Alert.alert('Thông báo', 'Không thể gửi tin nhắn vì nhóm đã bị giải tán');
+      return;
+    }
+
     if (user?._id && socket) {
-
       if (messageContent.type === "text") {
-
         socket.emit("sendMessage", {
           conversationId,
           senderId: user._id,
@@ -99,7 +104,7 @@ const ChatScreen = () => {
         try {
           const response = await axiosInstance.post(
             "/api/message/uploadNhieuFile",
-            messageContent.image, // Đây là FormData đã được tạo
+            messageContent.image,
             {
               headers: {
                 "Content-Type": "multipart/form-data",
@@ -112,7 +117,7 @@ const ChatScreen = () => {
               conversationId,
               senderId: user._id,
               rereceiveId: otherUser._id,
-              content: response.data.data, // URL ảnh từ server
+              content: response.data.data,
               messageType: "image",
             });
           }
@@ -125,26 +130,31 @@ const ChatScreen = () => {
 
   const scrollViewRef = useRef();
 
-  // Thêm effect để cuộn xuống cuối khi messages thay đổi
   useEffect(() => {
     if (scrollViewRef.current && messages.length > 0) {
-      // Sử dụng requestAnimationFrame để đảm bảo scroll sau khi render
       requestAnimationFrame(() => {
         scrollViewRef.current.scrollToEnd({ animated: false });
       });
     }
   }, [messages]);
 
-  // Effect để scroll đến cuối khi vào trang
   useEffect(() => {
     const timer = setTimeout(() => {
       if (scrollViewRef.current && messages.length > 0) {
         scrollViewRef.current.scrollToEnd({ animated: false });
       }
-    }, 50); // Thêm delay nhỏ để đảm bảo layout đã ổn định
+    }, 50);
 
     return () => clearTimeout(timer);
   }, []);
+
+  if (isGroupDisbanded) {
+    return (
+      <View className="h-full w-full flex justify-center items-center">
+        <Text className="text-[18px] text-gray-500 font-bold">Nhóm đã bị giải tán bởi quản trị viên</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView className="h-full w-full">
@@ -163,13 +173,16 @@ const ChatScreen = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={90}
       >
-        <InputSend onSend={handleSendMessage} conversation = {conversation}/>
+        <InputSend 
+          onSend={handleSendMessage} 
+          conversation={conversation} 
+          socket={socket}
+          disabled={isGroupDisbanded}
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
-
-export default ChatScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -181,3 +194,5 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
 });
+
+export default ChatScreen;
