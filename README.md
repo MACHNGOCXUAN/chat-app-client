@@ -74,7 +74,7 @@ Dự án xây dựng ứng dụng **Zalo Clone** với các chức năng cơ b�
 
 ## 👨‍💻 Nhóm phát triển
 - Mạch Ngọc Xuân - Backend, App Mobile
-- Lê Văn C - App Mobile
+- Huỳnh Công Vương - App Mobile
 
 ---
 
