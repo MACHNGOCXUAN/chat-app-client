@@ -325,6 +325,12 @@ const Message = ({ navigation }) => {
       ? formatTime(item.lastMessage.timestamp)
       : "";
 
+      // const lastMessageTime = item?.isActive == false ? "Nhóm đã giải tán" : (
+      //   item.lastMessage
+      // ? formatTime(item.lastMessage.timestamp)
+      // : ""
+      // )
+
     const hasUnread = item.unreadCount > 0;
     const isOnline = otherUser?.isOnline || false;
 
@@ -409,7 +415,11 @@ const Message = ({ navigation }) => {
               ]}
               numberOfLines={1}
             >
-              {truncateMessage(item.lastMessage?.content)}
+              {
+                truncateMessage(item?.isActive == false ? "Nhóm đã giải tán" : item.lastMessage?.content)
+              }
+
+              
             </Text>
 
             {hasUnread && (
