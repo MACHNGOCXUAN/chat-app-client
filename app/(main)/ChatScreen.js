@@ -23,14 +23,18 @@ import axiosInstance from "../../utils/axiosInstance";
 const ChatScreen = () => {
   const { user } = useSelector((state) => state.auth);
   const params = useLocalSearchParams();
-  const conversation = params.conversation ? JSON.parse(params.conversation) : null;
-  const [conversationId, setConversationId] = useState(conversation?._id || null);
+  const conversation = params.conversation
+    ? JSON.parse(params.conversation)
+    : null;
+  const [conversationId, setConversationId] = useState(
+    conversation?._id || null
+  );
   const otherUser = params.otherUser ? JSON.parse(params.otherUser) : null;
   const [messages, setMessages] = useState([]);
   const [isGroupDisbanded, setIsGroupDisbanded] = useState(false);
 
   useEffect(() => {
-    if (conversation && conversation.type === 'group') {
+    if (conversation && conversation.type === "group") {
       // Kiểm tra trạng thái nhóm
       setIsGroupDisbanded(!conversation.isActive);
     }
@@ -65,29 +69,32 @@ const ChatScreen = () => {
     });
 
     // Lắng nghe khi conversation mới được tạo
-    socket.on("conversation_created", ({ conversationId: newConversationId }) => {
-      setConversationId(newConversationId);
-    });
+    socket.on(
+      "conversation_created",
+      ({ conversationId: newConversationId }) => {
+        setConversationId(newConversationId);
+      }
+    );
 
-    // Lắng nghe sự kiện nhóm bị giải tán
-    socket.on('group_disbanded', ({ conversationId: disbandedId, message }) => {
-      if (disbandedId === conversationId) {
+    socket.on("group_disbanded", (dissolvedData) => {
+      if (dissolvedData.conversationId === conversationId) {
         setIsGroupDisbanded(true);
-        Alert.alert('Thông báo', message || 'Nhóm đã bị giải tán bởi quản trị viên');
-        router.back();
+        setTimeout(() => {
+          router.replace("/(tabs)/")
+        }, 2000);
       }
     });
 
     return () => {
       socket.off("joined_room");
       socket.off("conversation_created");
-      socket.off('group_disbanded');
+      socket.off("group_disbanded");
     };
-  }, [otherUser, conversationId, user, conversation]);
+  }, [otherUser, conversationId, user, conversation, conversation?.isActive]);
 
   const handleSendMessage = async (messageContent) => {
     if (isGroupDisbanded) {
-      Alert.alert('Thông báo', 'Không thể gửi tin nhắn vì nhóm đã bị giải tán');
+      Alert.alert("Thông báo", "Không thể gửi tin nhắn vì nhóm đã bị giải tán");
       return;
     }
 
@@ -149,12 +156,16 @@ const ChatScreen = () => {
   }, []);
 
   if (isGroupDisbanded) {
-    return (
-      <View className="h-full w-full flex justify-center items-center">
-        <Text className="text-[18px] text-gray-500 font-bold">Nhóm đã bị giải tán bởi quản trị viên</Text>
-      </View>
-    );
-  }
+  return (
+    <SafeAreaView className="h-full w-full bg-white justify-center items-center px-4">
+      <MaterialIcons name="group-off" size={64} color="gray" />
+      <Text className="text-lg font-semibold mt-4 text-center text-gray-600">
+        Nhóm đã bị giải tán bởi quản trị viên
+      </Text>
+    </SafeAreaView>
+  );
+}
+
 
   return (
     <SafeAreaView className="h-full w-full">
@@ -173,9 +184,9 @@ const ChatScreen = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={90}
       >
-        <InputSend 
-          onSend={handleSendMessage} 
-          conversation={conversation} 
+        <InputSend
+          onSend={handleSendMessage}
+          conversation={conversation}
           socket={socket}
           disabled={isGroupDisbanded}
         />
