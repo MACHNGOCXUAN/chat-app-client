@@ -1,50 +1,83 @@
-# Welcome to your Expo app 👋
+# 📱 Zalo Clone Project
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Dự án xây dựng ứng dụng **Zalo Clone** với các chức năng cơ bản và nâng cao như nhắn tin cá nhân, nhắn tin nhóm, đăng ký - đăng nhập, quản lý tài khoản và nhiều tính năng mở rộng khác. Hệ thống được triển khai trên **cả Web và App (Mobile)**.
 
-## Get started
+## 🧠 Công nghệ sử dụng
+- Web: ReactJS, NodeJS, Socket.io
+- App: React Native, Socket.io
+- Backend: ExpressJS, Socket.io
+- Database: MongoDB
+- Authentication: JWT, send email
 
-1. Install dependencies
+### ✅ Chức năng đăng ký & đăng nhập
 
-   ```bash
-   npm install
-   ```
+**Yêu cầu:**
+- [x] Chức năng đăng ký người dùng mới (có xác thực qua email/SMS tuỳ chọn)
+- [x] Đăng nhập bằng email và mật khẩu
+- [x] Quên mật khẩu (gửi lại qua email)
+- [x] Cập nhật mật khẩu
+- [x] Xem và chỉnh sửa hồ sơ tài khoản (profile)
+- [x] Thay đổi ảnh đại diện
 
-2. Start the app
+**Triển khai trên:**
+- [x] Web
+- [x] App
 
-   ```bash
-    npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+### ✅ Chức năng Chat đơn (1-1)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+**Yêu cầu:**
+- [x] Thiết lập kết nối trước khi chat (Socket.IO)
+- [x] Gửi tin nhắn dạng văn bản
+- [x] Gửi file (hình ảnh, tài liệu)
+- [x] Gửi emoji
+- [x] Thu hồi tin nhắn
+- [x] Xoá tin nhắn
+- [x] Chuyển tiếp tin nhắn
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+**Triển khai trên:**
+- [x] Web
+- [x] App
 
-## Get a fresh project
+**✨ Tính năng nâng cao:**
+- [x] Gửi nhiều ảnh trong một lần
+- [x] Gửi video có hiển thị preview
 
-When you're ready, run:
+---
 
-```bash
-npm run reset-project
-```
+### ✅ Chức năng Chat nhóm
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+**Yêu cầu quản lý nhóm:**
+- [x] Tạo nhóm
+- [x] Thêm thành viên
+- [x] Xoá thành viên
+- [x] Giải tán nhóm
+- [x] Gán quyền quản trị
 
-## Learn more
+**Chức năng chat nhóm:**
+- [x] Gửi tin nhắn văn bản, emoji
+- [x] Gửi file hình ảnh
+- [x] Gửi file video (hiển thị preview)
+- [x] Thu hồi, xoá, chuyển tiếp tin nhắn
 
-To learn more about developing your project with Expo, look at the following resources:
+**Triển khai trên:**
+- [x] Web
+- [x] App
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+**✨ Tính năng nâng cao:**
+- [x] Gửi nhóm hình ảnh, file video
+- [x] Tính năng gọi video (đang phát triển)
+- [x] Gợi ý tạo tài khoản từ danh bạ điện thoại
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
+## 👨‍💻 Nhóm phát triển
+- Mạch Ngọc Xuân - Backend, App Mobile
+- Huỳnh Công Vương - App Mobile
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## 📌 Ghi chú
+- Dự án vẫn đang tiếp tục hoàn thiện các tính năng nâng cao.
+
