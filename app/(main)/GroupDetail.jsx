@@ -183,102 +183,64 @@ const GroupDetail = () => {
             setGroupInfo(updatedConversation);
           }
         }
-      }
-    );
+    }, []);
 
-    // Lắng nghe sự kiện nhận chi tiết cuộc trò chuyện
-    socket.on("conversation_details", (conversationDetails) => {
-      if (conversationDetails && conversationDetails._id === conversation._id) {
-        setGroupInfo(conversationDetails);
-        if (conversationDetails.name) {
-          setNewGroupName(conversationDetails.name);
-        }
-        handleMembersData(conversationDetails);
-      }
-    });
+    useEffect(() => {
+        // Lắng nghe sự kiện cập nhật quyền thành viên
+        socket.on('member_role_updated', ({ conversationId, targetUserId, newRole, previousAdminId }) => {
+            if (conversationId === conversation._id) {
+                console.log('Nhận sự kiện cập nhật quyền:', {
+                    targetUserId,
+                    newRole,
+                    previousAdminId,
+                    currentUserId: user._id
+                });
+                
+                // Cập nhật danh sách thành viên
+                setMembers(prevMembers => {
+                    const updatedMembers = prevMembers.map(member => ({
+                        ...member,
+                        role: member._id === targetUserId ? 'admin' :
+                              member._id === previousAdminId ? 'member' :
+                              member.role
+                    }));
+                    console.log('Danh sách thành viên sau cập nhật:', updatedMembers);
+                    return updatedMembers;
+                });
 
-    // Lắng nghe sự kiện thành viên bị xóa
-    socket.on("member_removed", ({ conversationId, memberId, success }) => {
-      if (conversationId === conversation._id && success) {
-        setMembers((prevMembers) =>
-          prevMembers.filter((member) => member._id !== memberId)
-        );
-      }
-    });
+                // Cập nhật trạng thái admin của người dùng hiện tại
+                if (user._id === targetUserId) {
+                    console.log('Người dùng được thăng cấp lên admin');
+                    setIsAdmin(true);
+                    Alert.alert('Thông báo', 'Bạn đã trở thành quản trị viên của nhóm');
+                } else if (user._id === previousAdminId) {
+                    console.log('Người dùng không còn là admin');
+                    setIsAdmin(false);
+                    Alert.alert('Thông báo', 'Bạn không còn là quản trị viên của nhóm');
+                }
 
-    // Lắng nghe sự kiện nhóm bị xóa
-    socket.on("conversation_deleted", (deletedConversationId) => {
-      if (deletedConversationId === conversation._id) {
-        Alert.alert("Thông báo", "Nhóm đã bị giải tán");
-        router.back();
-      }
-    });
-
-    // Lắng nghe sự kiện bị đuổi khỏi nhóm
-    socket.on("removed_from_group", ({ conversationId, userId }) => {
-      if (conversationId === conversation._id && userId === user._id) {
-        Alert.alert("Thông báo", "Bạn đã bị quản trị viên xóa khỏi nhóm");
-        router.back();
-      }
-    });
-
-    // Lắng nghe sự kiện nhóm được cập nhật
-    socket.on("group_updated", (updatedGroup) => {
-      if (updatedGroup._id === conversation._id) {
-        setGroupInfo(updatedGroup);
-        if (updatedGroup.name) {
-          setNewGroupName(updatedGroup.name);
-        }
-      }
-    });
-
-    socket.on("members_added", ({ conversationId, updatedMembers }) => {
-      if (conversationId === conversation._id) {
-        setMembers(updatedMembers);
-      }
-    });
-
-    return () => {
-      socket.off("member_role_updated");
-      socket.off("group_updated");
-      socket.off("members_added");
-      socket.off("conversation_details");
-      socket.off("member_removed");
-      socket.off("conversation_deleted");
-      socket.off("removed_from_group");
-    };
-  }, [conversation, user]);
-
-  const handleLeaveGroup = () => {
-    Alert.alert(
-      "Rời nhóm",
-      "Bạn có chắc chắn muốn rời khỏi nhóm chat này không?",
-      [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Rời nhóm",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              // Nếu người dùng là admin và là admin duy nhất, hiển thị thông báo
-              if (isAdmin) {
-                const adminCount = members.filter(
-                  (m) => m.role === "admin"
-                ).length;
-                if (adminCount <= 1) {
-                  Alert.alert(
-                    "Thông báo",
-                    "Bạn cần chuyển quyền admin cho người khác trước khi rời nhóm"
-                  );
-                  return;
+                // Hiển thị thông báo cho các thành viên khác
+                if (user._id !== targetUserId && user._id !== previousAdminId) {
+                    const targetMember = members.find(m => m._id === targetUserId);
+                    if (targetMember) {
+                        Alert.alert(
+                            'Thông báo',
+                            `${targetMember.username} đã trở thành quản trị viên mới của nhóm`
+                        );
+                    }
                 }
               }
 
-              socket.emit("leave_conversation", conversation._id, user._id);
-              router.back();
-            } catch (error) {
-              console.error("Error leaving group:", error);
-              Alert.alert("Lỗi", "Không thể rời khỏi nhóm");
+        // Lắng nghe sự kiện nhận chi tiết cuộc trò chuyện
+        socket.on('conversation_details', (conversationDetails) => {
+            if (conversationDetails && conversationDetails._id === conversation._id) {
+                setGroupInfo(conversationDetails);
+                if (conversationDetails.name) {
+                    setNewGroupName(conversationDetails.name);
+                }
+                handleMembersData(conversationDetails);
+                // Lưu conversation details mới vào localStorage
+                localStorage.setItem(`conversation_${conversation._id}`, JSON.stringify(conversationDetails));
             }
           },
         },
@@ -315,10 +277,48 @@ const GroupDetail = () => {
             uniqueFriendsMap.set(friend._id.toString(), friend);
           }
         });
+        // Lắng nghe sự kiện thành viên bị xóa
+        socket.on('member_removed', ({ conversationId, memberId, memberName, adminName }) => {
+            if (conversationId === conversation._id) {
+                console.log('Nhận sự kiện xóa thành viên:', {
+                    memberId,
+                    memberName,
+                    adminName,
+                    currentUserId: user._id
+                });
+                
+                // Cập nhật danh sách thành viên
+                setMembers(prevMembers => {
+                    const updatedMembers = prevMembers.filter(member => member._id !== memberId);
+                    console.log('Danh sách thành viên sau khi xóa:', updatedMembers);
+                    return updatedMembers;
+                });
 
-        // Chuyển Map thành mảng
-        allFriends = Array.from(uniqueFriendsMap.values());
-        console.log("Unique friends after deduplication:", allFriends.length);
+                // Xử lý thông báo và chuyển hướng
+                if (memberId === user._id) {
+                    console.log('Người dùng hiện tại bị xóa khỏi nhóm');
+                    Alert.alert(
+                        'Thông báo',
+                        'Bạn đã bị quản trị viên xóa khỏi nhóm',
+                        [
+                            {
+                                text: 'OK',
+                                onPress: () => {
+                                    console.log('Chuyển hướng người dùng bị xóa về trang chats');
+                                    router.replace("/(tabs)/chats");
+                                }
+                            }
+                        ]
+                    );
+                } else {
+                    console.log('Thông báo cho các thành viên khác');
+                    Alert.alert(
+                        'Thông báo',
+                        `${memberName} đã bị ${adminName} xóa khỏi nhóm`
+                    );
+                }
+            }
+        });
 
         // Lọc ra bạn bè chưa có trong nhóm
         const existingMemberIds = members
@@ -336,18 +336,133 @@ const GroupDetail = () => {
 
         setFriendsList(availableFriends);
         setFilteredFriends(availableFriends);
-
-        if (availableFriends.length === 0) {
-          if (allFriends.length === 0) {
-            console.log("User has no friends");
-          } else {
-            console.log("All friends are already in the group");
-          }
+        // Khi component mount, kiểm tra và lấy dữ liệu từ localStorage
+        const savedConversation = localStorage.getItem(`conversation_${conversation._id}`);
+        if (savedConversation) {
+            const parsedConversation = JSON.parse(savedConversation);
+            setGroupInfo(parsedConversation);
+            handleMembersData(parsedConversation);
         }
-      } else {
-        console.log(
-          "API response structure:",
-          Object.keys(response.data || {})
+
+        // Lắng nghe sự kiện nhóm bị giải tán
+        socket.on('group_disbanded', (data) => {
+            console.log('Nhận sự kiện giải tán nhóm:', data);
+            
+            if (data.conversationId === conversation._id) {
+                // Xóa dữ liệu local
+                try {
+                    localStorage.removeItem(`conversation_${data.conversationId}`);
+                    console.log('Đã xóa dữ liệu local của nhóm');
+                } catch (error) {
+                    console.error('Lỗi khi xóa dữ liệu local:', error);
+                }
+                
+                // Hiển thị thông báo và chuyển hướng
+                Alert.alert(
+                    'Thông báo',
+                    `Nhóm "${data.groupName}" đã bị giải tán bởi quản trị viên`,
+                    [
+                        {
+                            text: 'OK',
+                            onPress: () => {
+                                console.log('Chuyển hướng sau khi nhóm bị giải tán');
+                                router.replace("/(tabs)/chats");
+                            }
+                        }
+                    ]
+                );
+            }
+        });
+
+        // Lắng nghe sự kiện thành viên rời nhóm
+        socket.on('member_left_group', ({ conversationId, userId, username }) => {
+            if (conversationId === conversation._id) {
+                console.log('Thành viên rời nhóm:', { userId, username });
+                
+                // Cập nhật danh sách thành viên
+                setMembers(prevMembers => {
+                    const updatedMembers = prevMembers.filter(member => member._id !== userId);
+                    console.log('Danh sách thành viên sau khi rời nhóm:', updatedMembers);
+                    return updatedMembers;
+                });
+
+                // Nếu người rời nhóm là người dùng hiện tại
+                if (userId === user._id) {
+                    router.replace("/(tabs)/chats");
+                }
+            }
+        });
+
+        // Lắng nghe sự kiện lỗi từ server
+        socket.on('disband_error', (error) => {
+            console.error('Lỗi từ server khi giải tán nhóm:', error);
+            Alert.alert('Lỗi', error.message || 'Không thể giải tán nhóm. Vui lòng thử lại sau.');
+        });
+
+        // Lắng nghe sự kiện lỗi khi xóa thành viên
+        socket.on('remove_member_error', (error) => {
+            console.error('Lỗi khi xóa thành viên:', error);
+            Alert.alert('Lỗi', error.message || 'Không thể xóa thành viên. Vui lòng thử lại sau.');
+        });
+
+        return () => {
+            socket.off('member_role_updated');
+            socket.off('group_updated');
+            socket.off('members_added');
+            socket.off('conversation_details');
+            socket.off('member_removed');
+            socket.off('conversation_deleted');
+            socket.off('removed_from_group');
+            socket.off('group_disbanded');
+            socket.off('member_left_group');
+            socket.off('disband_error');
+            socket.off('remove_member_error');
+        };
+    }, [conversation, user, members]);
+
+    const handleLeaveGroup = () => {
+        Alert.alert(
+            'Rời nhóm',
+            'Bạn có chắc chắn muốn rời khỏi nhóm chat này không?',
+            [
+                { text: 'Hủy', style: 'cancel' },
+                {
+                    text: 'Rời nhóm',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            // Nếu người dùng là admin và là admin duy nhất, hiển thị thông báo
+                            if (isAdmin) {
+                                const adminCount = members.filter(m => m.role === 'admin').length;
+                                if (adminCount <= 1) {
+                                    Alert.alert('Thông báo', 'Bạn cần chuyển quyền admin cho người khác trước khi rời nhóm');
+                                    return;
+                                }
+                            }
+
+                            // Gửi thông báo đến nhóm trước khi rời
+                            socket.emit("send_message", {
+                                conversationId: conversation._id,
+                                senderId: user._id,
+                                content: `${user.username} đã rời khỏi nhóm`,
+                                messageType: "system"
+                            });
+
+                            // Emit sự kiện rời nhóm với thông tin đầy đủ
+                            socket.emit("leave_conversation", {
+                                conversationId: conversation._id,
+                                userId: user._id,
+                                username: user.username
+                            });
+
+                            // Không chuyển hướng ngay lập tức, đợi phản hồi từ server qua sự kiện 'member_left_group'
+                        } catch (error) {
+                            console.error('Error leaving group:', error);
+                            Alert.alert('Lỗi', 'Không thể rời khỏi nhóm');
+                        }
+                    }
+                },
+            ]
         );
         Alert.alert("Thông báo", "Không tìm thấy danh sách bạn bè");
       }
@@ -529,38 +644,72 @@ const GroupDetail = () => {
         return;
       }
     }
+    const handleRemoveMember = (memberId) => {
+        console.log('Bắt đầu xử lý xóa thành viên:', memberId);
 
-    // Cập nhật local state trước
-    setMembers((prevMembers) =>
-      prevMembers.map((member) =>
-        member._id === selectedMember._id
-          ? { ...member, role: newRole }
-          : member
-      )
-    );
+        if (!isAdmin) {
+            console.log('Không có quyền xóa thành viên - không phải admin');
+            Alert.alert('Thông báo', 'Chỉ quản trị viên mới có thể xóa thành viên');
+            return;
+        }
 
-    setIsRoleModalVisible(false);
+        // Tìm thông tin thành viên cần xóa
+        const memberToRemove = members.find(m => m._id === memberId);
+        if (!memberToRemove) {
+            console.log('Không tìm thấy thông tin thành viên:', memberId);
+            Alert.alert('Lỗi', 'Không tìm thấy thông tin thành viên');
+            return;
+        }
 
-    // Hiển thị thông báo
-    const actionText =
-      newRole === "admin"
-        ? "thăng cấp thành admin"
-        : "hạ cấp xuống thành viên thường";
-    Alert.alert(
-      "Thành công",
-      `Đã ${actionText} cho ${selectedMember.username}`
-    );
+        // Kiểm tra không thể xóa chính mình
+        if (memberId === user._id) {
+            console.log('Không thể tự xóa chính mình');
+            Alert.alert('Thông báo', 'Bạn không thể xóa chính mình khỏi nhóm');
+            return;
+        }
 
-    // Emit socket event để cập nhật role với tham số keepOriginalAdmin=true
-    socket.emit(
-      "update_member_role",
-      conversation._id,
-      selectedMember._id,
-      newRole,
-      user._id,
-      true // Giữ nguyên quyền của admin hiện tại
-    );
-  };
+        // Kiểm tra nếu là admin
+        const isTargetAdmin = memberToRemove.role === 'admin';
+        if (isTargetAdmin) {
+            console.log('Không thể xóa admin khỏi nhóm');
+            Alert.alert('Thông báo', 'Không thể xóa quản trị viên khỏi nhóm');
+            return;
+        }
+
+        Alert.alert(
+            'Xóa thành viên',
+            `Bạn có chắc chắn muốn xóa ${memberToRemove.username} khỏi nhóm?\n\nHành động này không thể hoàn tác.`,
+            [
+                { text: 'Hủy', style: 'cancel' },
+                {
+                    text: 'Xóa',
+                    style: 'destructive',
+                    onPress: () => {
+                        console.log('Xác nhận xóa thành viên:', memberToRemove.username);
+
+                        // Gửi thông báo trong group chat
+                        socket.emit("send_message", {
+                            conversationId: conversation._id,
+                            senderId: user._id,
+                            content: `${memberToRemove.username} đã bị quản trị viên xóa khỏi nhóm`,
+                            messageType: "system"
+                        });
+
+                        // Emit sự kiện xóa thành viên
+                        socket.emit("remove_member", {
+                            conversationId: conversation._id,
+                            memberId: memberId,
+                            adminId: user._id,
+                            memberName: memberToRemove.username,
+                            adminName: user.username
+                        });
+
+                        console.log('Đã gửi yêu cầu xóa thành viên');
+                    }
+                },
+            ]
+        );
+    };
 
   const handleRenameGroup = () => {
     if (!isAdmin) {
@@ -576,96 +725,124 @@ const GroupDetail = () => {
       Alert.alert("Thông báo", "Tên nhóm không được để trống");
       return;
     }
+    const handleUpdateRole = (newRole) => {
+        if (!selectedMember) {
+            console.log('Không tìm thấy thành viên được chọn');
+            return;
+        }
 
-    if (groupInfo && newGroupName.trim() === groupInfo.name) {
-      setIsRenameModalVisible(false);
-      return;
-    }
+        // Kiểm tra nếu người thực hiện không phải admin
+        if (!isAdmin) {
+            console.log('Người dùng không có quyền admin');
+            Alert.alert('Thông báo', 'Chỉ quản trị viên mới có thể thay đổi quyền thành viên');
+            setIsRoleModalVisible(false);
+            return;
+        }
 
-    setIsUpdating(true);
-    try {
-      // Sử dụng socket thay vì API vì hiện tại API endpoint không tồn tại
-      socket.emit("update_group_name", {
-        conversationId: conversation._id,
-        name: newGroupName.trim(),
-        userId: user._id,
-      });
+        // Kiểm tra nếu đang thay đổi quyền của chính mình
+        if (selectedMember._id === user._id) {
+            console.log('Không thể tự thay đổi quyền của mình');
+            Alert.alert('Thông báo', 'Bạn không thể thay đổi quyền của chính mình');
+            setIsRoleModalVisible(false);
+            return;
+        }
 
-      // Cập nhật giao diện
-      setGroupInfo((prev) => ({
-        ...prev,
-        name: newGroupName.trim(),
-      }));
+        // Nếu đang thăng cấp lên admin
+        if (newRole === 'admin') {
+            Alert.alert(
+                'Xác nhận',
+                'Khi bạn chuyển quyền quản trị cho người này:\n\n' +
+                '- Bạn sẽ trở thành thành viên thường\n' +
+                '- Bạn sẽ không còn quyền quản trị\n' +
+                '- Tất cả quyền quản trị sẽ được chuyển cho người này\n\n' +
+                'Bạn có chắc chắn muốn thực hiện?',
+                [
+                    { text: 'Hủy', style: 'cancel' },
+                    {
+                        text: 'Đồng ý',
+                        style: 'destructive',
+                        onPress: () => {
+                            console.log('Bắt đầu chuyển quyền admin cho:', selectedMember.username);
+                            
+                            // Emit socket event để cập nhật role
+                            socket.emit("update_member_role", {
+                                conversationId: conversation._id,
+                                targetUserId: selectedMember._id,
+                                newRole: 'admin',
+                                previousAdminId: user._id,
+                                groupName: conversation.name || 'Nhóm chat'
+                            });
 
-      Alert.alert("Thành công", "Đã đổi tên nhóm");
-    } catch (error) {
-      console.error("Error renaming group:", error);
-      Alert.alert("Lỗi", "Không thể đổi tên nhóm");
-    } finally {
-      setIsUpdating(false);
-      setIsRenameModalVisible(false);
-    }
-  };
+                            // Gửi thông báo trong group chat
+                            socket.emit("send_message", {
+                                conversationId: conversation._id,
+                                senderId: user._id,
+                                content: `${user.username} đã chuyển quyền quản trị viên cho ${selectedMember.username}`,
+                                messageType: "system"
+                            });
 
-  const handleChangeGroupPhoto = async () => {
-    if (!isAdmin) {
-      Alert.alert("Thông báo", "Chỉ quản trị viên mới có thể đổi ảnh nhóm");
-      return;
-    }
+                            // Đóng modal
+                            setIsRoleModalVisible(false);
+                        }
+                    }
+                ]
+            );
+        } else {
+            console.log('Không cho phép hạ cấp thành viên');
+            Alert.alert('Thông báo', 'Không thể hạ cấp thành viên. Chỉ có thể chuyển quyền quản trị.');
+            setIsRoleModalVisible(false);
+        }
+    };
 
-    try {
-      const permissionResult =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const handleRenameGroup = () => {
+        if (!isAdmin) {
+            Alert.alert('Thông báo', 'Chỉ quản trị viên mới có thể đổi tên nhóm');
+            return;
+        }
 
-      if (!permissionResult.granted) {
-        Alert.alert(
-          "Thông báo",
-          "Cần quyền truy cập thư viện ảnh để thực hiện chức năng này"
-        );
-        return;
-      }
+        setIsRenameModalVisible(true);
+    };
 
-      // Sử dụng MediaType thay vì MediaTypeOptions (đã deprecated)
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: "photo",
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
+    const submitRenameGroup = async () => {
+        if (!newGroupName.trim()) {
+            Alert.alert('Thông báo', 'Tên nhóm không được để trống');
+            return;
+        }
 
-      if (!result.canceled && result.assets && result.assets[0]) {
-        uploadGroupImage(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error("Error picking image:", error);
-      Alert.alert("Lỗi", "Không thể chọn ảnh");
-    }
-  };
+        if (groupInfo && newGroupName.trim() === groupInfo.name) {
+            setIsRenameModalVisible(false);
+            return;
+        }
 
-  const uploadGroupImage = async (imageUri) => {
-    setIsChangingPhoto(true);
+        setIsUpdating(true);
+        try {
+            // Sử dụng socket thay vì API vì hiện tại API endpoint không tồn tại
+            socket.emit('update_group_name', {
+                conversationId: conversation._id,
+                name: newGroupName.trim(),
+                userId: user._id
+            });
 
-    try {
-      // Chuẩn bị formData để upload
-      const uriParts = imageUri.split(".");
-      const fileType = uriParts[uriParts.length - 1];
+            // Cập nhật giao diện
+            setGroupInfo(prev => ({
+                ...prev,
+                name: newGroupName.trim()
+            }));
 
-      const formData = new FormData();
-      formData.append("avatarURL", {
-        uri: imageUri,
-        name: `group_${Date.now()}.${fileType}`,
-        type: `image/${fileType}`,
-      });
+            Alert.alert('Thành công', 'Đã đổi tên nhóm');
+        } catch (error) {
+            console.error('Error renaming group:', error);
+            Alert.alert('Lỗi', 'Không thể đổi tên nhóm');
+        } finally {
+            setIsUpdating(false);
+            setIsRenameModalVisible(false);
+        }
+    };
 
-      // Gọi API upload ảnh
-      const uploadResponse = await axiosInstance.post(
-        "/api/message/uploadimage",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${accessToken}`,
-          },
+    const handleChangeGroupPhoto = async () => {
+        if (!isAdmin) {
+            Alert.alert('Thông báo', 'Chỉ quản trị viên mới có thể đổi ảnh nhóm');
+            return;
         }
       );
 
@@ -716,39 +893,103 @@ const GroupDetail = () => {
               const response = await axiosInstance.post(
                 "/api/conversation/groupDisbanded",
                 {
-                  conversationId: conversation._id,
-                },
-                {
-                  headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                  },
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                        Authorization: `Bearer ${accessToken}`,
+                    },
                 }
-              );
+            );
 
-              if (response.data.success) {
-                const successMessage =
-                  typeof response.data.message === "string"
-                    ? response.data.message
-                    : "Nhóm đã được giải tán";
+            if (uploadResponse.data && uploadResponse.data.success) {
+                const imageURL = uploadResponse.data.data;
 
-                Alert.alert("Thành công", successMessage, [
-                  { text: "OK", onPress: () => router.replace("/(tabs)/") },
-                ]);
-              }
-            } catch (error) {
-              console.error("Error disbanding group:", error);
-              Alert.alert("Lỗi", "Không thể giải tán nhóm");
+                // Sử dụng socket thay vì API vì hiện tại API endpoint không tồn tại
+                socket.emit('update_group_image', {
+                    conversationId: conversation._id,
+                    imageUrl: imageURL,
+                    userId: user._id
+                });
+
+                // Cập nhật giao diện
+                setGroupInfo(prev => ({
+                    ...prev,
+                    imageGroup: imageURL
+                }));
+
+                Alert.alert('Thành công', 'Đã đổi ảnh nhóm');
+            } else {
+                throw new Error('Upload failed');
             }
-          },
-        },
-      ]
-    );
-  };
+        } catch (error) {
+            console.error('Error uploading group image:', error);
+            Alert.alert('Lỗi', 'Không thể cập nhật ảnh nhóm');
+        } finally {
+            setIsChangingPhoto(false);
+        }
+    };
 
-  const renderMemberItem = ({ item }) => {
-    // Kiểm tra giá trị trước khi so sánh để tránh lỗi
-    const isCurrentUser = user && item && user._id === item._id;
-    const isItemAdmin = item.role === "admin";
+    const handleDeleteGroup = async () => {
+        console.log('Bắt đầu xử lý giải tán nhóm');
+
+        if (!isAdmin) {
+            console.log('Không có quyền giải tán nhóm - không phải admin');
+            Alert.alert('Thông báo', 'Chỉ quản trị viên mới có thể giải tán nhóm');
+            return;
+        }
+
+        Alert.alert(
+            'Giải tán nhóm',
+            'CẢNH BÁO: Hành động này sẽ:\n\n' +
+            '- Xóa vĩnh viễn tất cả tin nhắn\n' +
+            '- Xóa toàn bộ dữ liệu nhóm\n' +
+            '- Đưa tất cả thành viên ra khỏi nhóm\n' +
+            '- Không thể khôi phục lại\n\n' +
+            'Bạn có chắc chắn muốn giải tán nhóm này?',
+            [
+                { text: 'Hủy', style: 'cancel' },
+                {
+                    text: 'Giải tán',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            console.log('Xác nhận giải tán nhóm:', conversation._id);
+
+                            // Gửi thông báo cuối cùng
+                            socket.emit("send_message", {
+                                conversationId: conversation._id,
+                                senderId: user._id,
+                                content: "Nhóm chat đã bị giải tán bởi quản trị viên",
+                                messageType: "system"
+                            });
+
+                            console.log('Đã gửi thông báo giải tán');
+
+                            // Emit sự kiện giải tán nhóm
+                            socket.emit("disband_group", {
+                                conversationId: conversation._id,
+                                adminId: user._id,
+                                groupName: conversation.name || 'Nhóm chat',
+                                members: members.map(member => ({
+                                    _id: member._id,
+                                    username: member.username
+                                }))
+                            });
+
+                            console.log('Đã gửi yêu cầu giải tán nhóm');
+                            // Không chuyển hướng ngay lập tức, đợi phản hồi từ server qua sự kiện 'group_disbanded'
+                        } catch (error) {
+                            console.error('Lỗi khi giải tán nhóm:', error);
+                            Alert.alert('Lỗi', 'Không thể giải tán nhóm. Vui lòng thử lại sau.');
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const renderMemberItem = ({ item }) => {
+        const isCurrentUser = user && item && user._id === item._id;
+        const isItemAdmin = item.role === 'admin';
 
     return (
       <TouchableOpacity
@@ -778,54 +1019,199 @@ const GroupDetail = () => {
         {isAdmin && !isCurrentUser && (
           <View style={styles.memberActions}>
             <TouchableOpacity
-              style={styles.roleButton}
-              onPress={() => openRoleModal(item)}
+                style={styles.memberItem}
+                onPress={() => isAdmin && !isCurrentUser && openRoleModal(item)}
+                disabled={!isAdmin || isCurrentUser}
             >
-              <MaterialIcons name="edit" size={20} color="#297EFF" />
+                <View style={styles.memberInfo}>
+                    <Image
+                        source={{ uri: item?.avatarURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y' }}
+                        style={styles.memberAvatar}
+                    />
+                    <View>
+                        <Text style={styles.memberName}>{item?.username || 'Người dùng'} {isCurrentUser ? '(Bạn)' : ''}</Text>
+                        {isItemAdmin && <Text style={styles.adminLabel}>Quản trị viên</Text>}
+                    </View>
+                </View>
+
+                {isAdmin && !isCurrentUser && (
+                    <View style={styles.memberActions}>
+                        {!isItemAdmin && (
+                            <>
+                                <TouchableOpacity
+                                    style={styles.roleButton}
+                                    onPress={() => openRoleModal(item)}
+                                >
+                                    <MaterialIcons name="admin-panel-settings" size={20} color="#297EFF" />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.removeButton}
+                                    onPress={() => handleRemoveMember(item._id)}
+                                >
+                                    <MaterialIcons name="remove-circle" size={20} color="#FF3B30" />
+                                </TouchableOpacity>
+                            </>
+                        )}
+                    </View>
+                )}
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleRemoveMember(item._id)}>
-              <Ionicons name="remove-circle-outline" size={24} color="red" />
-            </TouchableOpacity>
-          </View>
-        )}
-      </TouchableOpacity>
-    );
-  };
+        );
+    };
+
+    // Thêm useEffect để theo dõi thay đổi quyền
+    useEffect(() => {
+        if (!isAdmin) {
+            console.log('Người dùng không còn quyền admin - Cập nhật giao diện');
+            // Ẩn tất cả các chức năng quản trị
+            setIsRoleModalVisible(false);
+            setIsRenameModalVisible(false);
+            setIsAddMemberModalVisible(false);
+            
+            // Disable các nút chức năng quản trị
+            const adminButtons = document.querySelectorAll('.admin-function');
+            adminButtons.forEach(button => {
+                button.disabled = true;
+            });
+        }
+    }, [isAdmin]);
+
+    if (isLoading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#297EFF" />
+                <Text style={{ marginTop: 10 }}>Đang tải...</Text>
+            </View>
+        );
+    }
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#297EFF" />
-        <Text style={{ marginTop: 10 }}>Đang tải...</Text>
-      </View>
-    );
-  }
+        <SafeAreaView style={styles.container}>
+            <ScrollView>
+                {/* Phần thông tin nhóm */}
+                <View style={styles.groupInfoContainer}>
+                    <TouchableOpacity
+                        style={styles.avatarContainer}
+                        onPress={handleChangeGroupPhoto}
+                        disabled={!isAdmin || isChangingPhoto}
+                    >
+                        {isChangingPhoto ? (
+                            <View style={styles.loadingAvatarContainer}>
+                                <ActivityIndicator size="small" color="#FFFFFF" />
+                            </View>
+                        ) : (
+                            <>
+                                <Image
+                                    source={{ uri: groupInfo?.avatarURL || groupInfo?.imageGroup || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y' }}
+                                    style={styles.groupAvatar}
+                                />
+                                {isAdmin && (
+                                    <View style={styles.editAvatarBadge}>
+                                        <Ionicons name="camera" size={16} color="#FFFFFF" />
+                                    </View>
+                                )}
+                            </>
+                        )}
+                    </TouchableOpacity>
+                    <Text style={styles.groupName}>{groupInfo?.name || 'Nhóm chat'}</Text>
+                    <Text style={styles.memberCount}>{members?.length || 0} thành viên</Text>
+                </View>
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView>
-        {/* Phần thông tin nhóm */}
-        <View style={styles.groupInfoContainer}>
-          <TouchableOpacity
-            style={styles.avatarContainer}
-            onPress={handleChangeGroupPhoto}
-            disabled={!isAdmin || isChangingPhoto}
-          >
-            {isChangingPhoto ? (
-              <View style={styles.loadingAvatarContainer}>
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              </View>
-            ) : (
-              <>
-                <Image
-                  source={{
-                    uri:
-                      groupInfo?.avatarURL ||
-                      groupInfo?.imageGroup ||
-                      "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
-                  }}
-                  style={styles.groupAvatar}
-                />
+                {/* Phần chức năng */}
+                <View style={styles.functionContainer}>
+                    <TouchableOpacity style={styles.functionButton}>
+                        <Ionicons name="search" size={24} color="#297EFF" />
+                        <Text style={styles.functionText}>Tìm kiếm tin nhắn</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.functionButton} onPress={handleAddMember}>
+                        <Ionicons name="person-add" size={24} color="#297EFF" />
+                        <Text style={styles.functionText}>Thêm thành viên</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.functionButton}
+                        onPress={() => router.push({
+                            pathname: '/(main)/ChatScreen',
+                            params: {
+                                conversation: params.conversation
+                            }
+                        })}
+                    >
+                        <Ionicons name="chatbubble-ellipses" size={24} color="#297EFF" />
+                        <Text style={styles.functionText}>Nhắn tin</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Phần cài đặt thông báo */}
+                <View style={styles.settingSection}>
+                    <Text style={styles.sectionTitle}>Thông báo</Text>
+                    <View style={styles.settingItem}>
+                        <Text style={styles.settingText}>Bật thông báo</Text>
+                        <Switch
+                            value={isNotificationEnabled}
+                            onValueChange={(value) => setIsNotificationEnabled(value)}
+                            trackColor={{ false: '#767577', true: '#81b0ff' }}
+                            thumbColor={isNotificationEnabled ? '#297EFF' : '#f4f3f4'}
+                        />
+                    </View>
+                </View>
+
+                {/* Phần thành viên */}
+                <View style={styles.memberSection}>
+                    <View style={styles.memberHeader}>
+                        <Text style={styles.sectionTitle}>Thành viên nhóm</Text>
+                        <Text style={styles.memberCount}>{members?.length || 0}</Text>
+                    </View>
+                    {members && members.length > 0 ? (
+                        <FlatList
+                            data={members}
+                            renderItem={renderMemberItem}
+                            keyExtractor={(item, index) => item?._id || `member-${index}`}
+                            scrollEnabled={false}
+                        />
+                    ) : (
+                        <Text style={{ padding: 15, textAlign: 'center', color: 'gray' }}>
+                            Không có thành viên nào
+                        </Text>
+                    )}
+                </View>
+
+                {/* Phần tùy chọn khác */}
+                <View style={styles.otherOptionsSection}>
+                    {isAdmin && (
+                        <>
+                            <TouchableOpacity style={styles.optionItem} onPress={() => {
+                                router.push({
+                                    pathname: "(main)/SettingGroup",
+                                    params: {
+                                        conversation: JSON.stringify(conversation),
+                                    },
+                                });
+                            }}>
+                                <Ionicons name="settings" size={24} color="#297EFF" />
+                                <Text style={styles.optionText}>Cài đặt nhóm</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity style={styles.optionItem} onPress={handleRenameGroup}>
+                                <Entypo name="info-with-circle" size={24} color="#297EFF" />
+                                <Text style={styles.optionText}>Đổi tên nhóm</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity style={styles.optionItem} onPress={handleChangeGroupPhoto}>
+                                <FontAwesome name="photo" size={24} color="#297EFF" />
+                                <Text style={styles.optionText}>Đổi ảnh nhóm</Text>
+                            </TouchableOpacity>
+                        </>
+                    )}
+
+                    <TouchableOpacity style={styles.optionItem} onPress={handleLeaveGroup}>
+                        <MaterialIcons name="exit-to-app" size={24} color="red" />
+                        <Text style={[styles.optionText, styles.leaveText]}>Rời nhóm</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Nút giải tán nhóm chỉ hiển thị cho admin */}
                 {isAdmin && (
                   <View style={styles.editAvatarBadge}>
                     <Ionicons name="camera" size={16} color="#FFFFFF" />
@@ -1655,7 +2041,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#888",
     textAlign: "center",
-  },
+  }
 });
 
 export default GroupDetail;
