@@ -103,6 +103,12 @@ const Message = ({ navigation }) => {
       });
     };
 
+    const handleRemovieMember = (data) => {
+          if(data.conversationId) {
+            fetchConversation()
+          }
+        }
+
     socket.on("joined_room", handleJoinedConversation);
     socket.on("conversation_updated", handleConversationUpdate);
     socket.on("forwardConversation", () => {
@@ -120,6 +126,7 @@ const Message = ({ navigation }) => {
       socket.off("joined_room", handleJoinedConversation);
       socket.off("conversation_updated", handleConversationUpdate);
       socket.off("group_created", handleGroupCreated);
+      socket.on("member_removed", handleRemovieMember)
     };
   }, [socket, accessToken]);
 
