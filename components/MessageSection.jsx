@@ -84,10 +84,32 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
       }
     };
 
+    const handleRemovieMember = (data) => {
+      if(data.conversationId) {
+        fetchMessageConversation(conversationId)
+        if(user._id == data.removedMemberId) {
+          router.replace("/(tabs)/")
+        }
+      }
+    }
+
+    const handleRemovieMembe = (data) => {
+      if(data.conversationId) {
+        fetchMessageConversation(conversationId)
+      }
+    }
+
+    const handleAddMember = (data) => {
+      fetchMessageConversation(data.conversationId)
+    }
+
     socket.on("message_sent", handleNewMessage);
     socket.on("receive_message", handleNewMessage);
     socket.on("message_recalled", handleRecallMessageUpdate);
     socket.on("group_settings_updated", handleGroupSettingsUpdated);
+    socket.on("member_removed", handleRemovieMember)
+    socket.on("you_were_removed", handleRemovieMembe)
+    socket.on("new_message", handleAddMember)
 
     return () => {
       socket.off("message_sent", handleNewMessage);
@@ -95,7 +117,7 @@ const MessageSection = ({ conversationId, messages, setMessages }) => {
       socket.off("message_recalled", handleRecallMessageUpdate);
       socket.off("group_settings_updated", handleGroupSettingsUpdated);
     };
-  }, [conversationId]);
+  }, [conversationId, socket]);
 
   const handleRecallMessage = (messageId) => {
     socket.emit("recall_message", {
